@@ -1,4 +1,4 @@
 .idea
-./out
+out/
 *.class
 ReliableDS.iml
