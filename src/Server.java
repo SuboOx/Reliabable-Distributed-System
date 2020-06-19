@@ -2,9 +2,11 @@ import java.net.*;
 import java.io.*;
 
 public class Server {
+    /*Database and protocol, currently very naive*/
     private static DataBase db = new DataBase();
     private static Protocol protocol = new Protocol();
 
+    /*Each client will be served by a thread in server, all of the threads shares database and protocol*/
     static class ServerThread extends Thread {
         protected Socket clientSocket;
 
@@ -14,10 +16,11 @@ public class Server {
 
         @Override
         public void run() {
-            PrintWriter out = null;
+            //PrintWriter out = null;
+            //TODO: Maybe send a receipt
             BufferedReader in = null;
             try {
-                out = new PrintWriter(clientSocket.getOutputStream(), true);
+                //out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             } catch (IOException e) {
                 System.err.println("Unable to create buffer");
@@ -50,7 +53,7 @@ public class Server {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
         if (args.length != 1) {
             System.err.println("Usage: java Server <port number>");

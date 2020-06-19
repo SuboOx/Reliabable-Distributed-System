@@ -9,7 +9,7 @@ import java.io.*;
 import java.net.*;
 
 public class Client {
-    public static void main(@NotNull String[] args) throws IOException {
+    public static void main(@NotNull String[] args) {
 
         if (args.length != 3) {
             System.err.println("Usage: java EchoClient <host name> <port number> <client id>");
@@ -30,7 +30,7 @@ public class Client {
             System.out.println("Connection established.");
 
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-            String fromServer;
+            //String fromServer;
             String fromUser;
 
             while (true) {
