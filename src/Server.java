@@ -25,8 +25,8 @@ public class Server {
             String inputLine;
 
             while ((inputLine = in.readLine()) != null) {
-                System.out.println("Received msg from client:" + inputLine);
                 parseResult parsed = protocol.unpack(inputLine);
+                System.out.println("Received msg from client " + parsed.clientID + ":" + inputLine);
                 System.out.println("Unpacked msg: " + parsed.var + "=" + parsed.value + ", id: " + parsed.id);
                 db.setVariable(parsed.var, parsed.value);
                 //print database

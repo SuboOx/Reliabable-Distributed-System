@@ -18,7 +18,7 @@ public class Protocol {
      * @param line input string to parse, format: var=value
      * @return null when error happens, otherwise packed string
      */
-    public String pack(String line) {
+    public String pack(String line, int clientID) {
         //Handle exception
         if (line == null || packFormatChecker(line))
             return null;
@@ -29,7 +29,7 @@ public class Protocol {
         String varString = line.substring(0, loc);
         String valueString = line.substring(loc + 1);
 
-        return idSpecifier + uniqueID + idSpecifier + varSpecifier + varString + varSpecifier + valueSpecifier + valueString + valueSpecifier;
+        return idSpecifier + uniqueID + idSpecifier + varSpecifier + varString + varSpecifier + valueSpecifier + valueString + valueSpecifier + clientID;
     }
 
     /**
@@ -43,8 +43,9 @@ public class Protocol {
         String id = line.substring(line.indexOf(idSpecifier) + 1, line.lastIndexOf(idSpecifier));
         String var = line.substring(line.indexOf(varSpecifier) + 1, line.lastIndexOf(varSpecifier));
         String value = line.substring(line.indexOf(valueSpecifier) + 1, line.lastIndexOf(valueSpecifier));
+        String clientID = line.substring(line.lastIndexOf(valueSpecifier) + 1);
 
-        return new parseResult(id, var, value);
+        return new parseResult(id, var, value, clientID);
     }
 
     /**
@@ -71,10 +72,12 @@ final class parseResult {
     public String id;
     public String var;
     public String value;
+    public String clientID;
 
-    parseResult(String id, String var, String value) {
+    parseResult(String id, String var, String value, String clientID) {
         this.id = id;
         this.var = var;
         this.value = value;
+        this.clientID = clientID;
     }
 }

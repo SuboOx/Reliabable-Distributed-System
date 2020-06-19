@@ -8,7 +8,7 @@ Currently support input in client `var=value`, an `id` will be automatically gen
 
 ### Packing and unpacking
 
-`val=value` will be packed in the form of `?id?$var$#value#` and send to server. server will unpack it to `var` and `value` and store it in database.
+`val=value` will be packed in the form of `?id?$var$#value#clientID` and send to server. server will unpack it to `var` and `value` and store it in database.
 
 ## Database
 

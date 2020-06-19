@@ -11,13 +11,14 @@ import java.net.*;
 public class Client {
     public static void main(@NotNull String[] args) throws IOException {
 
-        if (args.length != 2) {
-            System.err.println("Usage: java EchoClient <host name> <port number>");
+        if (args.length != 3) {
+            System.err.println("Usage: java EchoClient <host name> <port number> <client id>");
             System.exit(1);
         }
 
         String hostName = args[0];
         int portNumber = Integer.parseInt(args[1]);
+        int clientID = Integer.parseInt(args[2]);
 
         System.out.println("<----Client started, sending message to " + hostName + ":" + portNumber + "---->");
         Protocol protocol = new Protocol();
@@ -34,17 +35,15 @@ public class Client {
 
             while (true) {
                 fromUser = stdIn.readLine();
-//                fromServer = in.readLine();
                 if (fromUser.equals("exit"))
                     break;
-//                if(fromServer.equals("$RECV$")){
-//                    System.out.println("Received receipt from server.");
-//                    break;
-//                }
-                if (fromUser != null) {
-                    String msg2send = protocol.pack(fromUser);
+
+                String msg2send = protocol.pack(fromUser, clientID);
+                if (msg2send != null) {
                     System.out.println("Sending msg: " + msg2send);
                     out.println(msg2send);
+                } else {
+                    System.out.println("Illegal input, input should be var=value");
                 }
             }
             // Exit
