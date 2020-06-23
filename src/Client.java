@@ -12,7 +12,7 @@ public class Client {
     public static void main(@NotNull String[] args) {
 
         if (args.length != 3) {
-            System.err.println("Usage: java EchoClient <host name> <port number> <client id>");
+            System.err.println("Usage: java Client <host name> <port number> <client id>");
             System.exit(1);
         }
 
