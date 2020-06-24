@@ -16,11 +16,11 @@ public class Server {
 
         @Override
         public void run() {
-            //PrintWriter out = null;
+            PrintWriter out = null;
             //TODO: Maybe send a receipt
             BufferedReader in = null;
             try {
-                //out = new PrintWriter(clientSocket.getOutputStream(), true);
+                out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             } catch (IOException e) {
                 System.err.println("Unable to create buffer");
@@ -36,6 +36,7 @@ public class Server {
                         parseResult parsed = protocol.unpack(inputLine);
                         System.out.println("Received msg from client " + parsed.clientID + ":" + inputLine);
                         System.out.println("Unpacked msg: " + parsed.var + "=" + parsed.value + ", id: " + parsed.id);
+                        out.println("msg: "+ inputLine + " received.");
                         db.setVariable(parsed.var, parsed.value);
                         //print database
                         System.out.println("Current database:");
@@ -45,7 +46,7 @@ public class Server {
                         return;
                     }
                 } catch (IOException e) {
-                    System.err.println("Unable to readline.");
+                    System.err.println("Unable to read line.");
                     return;
                 }
             }

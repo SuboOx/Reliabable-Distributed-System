@@ -6,11 +6,19 @@
  * */
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Protocol {
     final private char idSpecifier = '?';
     final private char varSpecifier = '$';
     final private char valueSpecifier = '#';
+
+    private static AtomicLong idCounter = new AtomicLong();
+
+    public static String createID()
+    {
+        return String.valueOf(idCounter.getAndIncrement());
+    }
 
     /**
      * TODO: checker is still a naive one, it does not check if line is legitimate
@@ -23,7 +31,7 @@ public class Protocol {
         if (line == null || packFormatChecker(line))
             return null;
 
-        String uniqueID = UUID.randomUUID().toString();
+        String uniqueID = clientID*10000 + createID();
         //Locate =
         int loc = line.indexOf('=');
         String varString = line.substring(0, loc);
