@@ -45,8 +45,8 @@ public class Client {
                 } else {
                     System.out.println("Illegal input, input should be var=value");
                 }
-             //ToDo:
-                if((fromServer = in.readLine()) != null){
+                //TODO: when no msg send, no msg received fro, server, Client will stop at this line waiting for server.
+                if ((fromServer = in.readLine()) != null) {
                     System.out.println("Server respond: " + fromServer);
                 }
             }
