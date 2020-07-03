@@ -30,7 +30,7 @@ public class Client {
             System.out.println("Connection established.");
 
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-            //String fromServer;
+            String fromServer;
             String fromUser;
 
             while (true) {
@@ -44,6 +44,10 @@ public class Client {
                     out.println(msg2send);
                 } else {
                     System.out.println("Illegal input, input should be var=value");
+                }
+                //TODO: when no msg send, no msg received fro, server, Client will stop at this line waiting for server.
+                if ((fromServer = in.readLine()) != null) {
+                    System.out.println("Server respond: " + fromServer);
                 }
             }
             // Exit
