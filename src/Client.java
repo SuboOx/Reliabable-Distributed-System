@@ -3,13 +3,13 @@
  * A simple client support sending message to server via socket.
  * */
 
-import org.jetbrains.annotations.NotNull;
+//import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.*;
 
 public class Client {
-    public static void main(@NotNull String[] args) {
+    public static void main(String[] args) {
 
         if (args.length != 3) {
             System.err.println("Usage: java Client <host name> <port number> <client id>");

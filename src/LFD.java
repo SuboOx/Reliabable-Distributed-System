@@ -23,7 +23,10 @@ public class LFD {
 
         //Check if server is alive
         while (true) {
-            log(isAlive(hostName, portNumber, timeout));
+            if(!log(isAlive(hostName, portNumber, timeout))){
+                break;
+            }
+            //log(isAlive(hostName, portNumber, timeout));
             Thread.sleep(heartbeatFreq);
         }
     }
@@ -53,9 +56,10 @@ public class LFD {
     /**
      * Print the log.
      */
-    private static void log(boolean isAlive) {
-        System.out.println("Alive: " + isAlive);
+    private static boolean log(boolean isAlive) {
         System.out.println("Heartbeat Count: " + heartbeatCount++);
+        System.out.println("Alive: " + isAlive);
+        return isAlive;
     }
 
 }
