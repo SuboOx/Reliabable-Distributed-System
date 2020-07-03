@@ -21,6 +21,11 @@ public class LFD {
         int timeout = Integer.parseInt(args[2]);
         int heartbeatFreq = Integer.parseInt(args[3]);
 
+        //Wait the server to on line
+        while(!isAlive(hostName, portNumber, timeout)){
+            System.out.println("Waiting for Server to be launched");
+        }
+
         //Check if server is alive
         while (true) {
             if(!log(isAlive(hostName, portNumber, timeout))){
