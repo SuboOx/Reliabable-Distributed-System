@@ -87,17 +87,16 @@ public class Protocol {
     public parseResult GFDUnpack(String line) {
         String[] infos = line.split(Spliter);
 
-        if(infos.length != 5){
+        if(infos.length != 3){
             System.err.println("Invalid protocol message!");
             System.exit(1);
         }
 
         String LFDId = infos[0];
-        String serverId = infos[1];
-        String portNum = infos[2];
-        String operation = infos[3];
+        String operation  = infos[1];
+        String serverId = infos[2];
 
-        return new parseResult(LFDId, serverId,  portNum, operation);
+        return new parseResult(LFDId,  operation, serverId);
     }
 
 
