@@ -116,7 +116,6 @@ public class Client {
         serverIDs[0] = Integer.parseInt(args[2]);
         serverIDs[1] = Integer.parseInt(args[3]);
         serverIDs[2] = Integer.parseInt(args[4]);
-
         
 
         for (int i = 0; i < 3; i++) {
