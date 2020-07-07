@@ -11,7 +11,7 @@ public class LFD {
 
     public static void main(String[] args) throws InterruptedException {
 
-        if (args.length != 4 || args.length != 3) {
+        if (args.length != 4 && args.length != 3) {
             System.err.println("Usage: java LFD <host name> <port number> <time out> (<heartbeat freq>)");
             System.exit(1);
         }

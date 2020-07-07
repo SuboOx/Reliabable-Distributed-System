@@ -51,7 +51,7 @@ public class Client {
                  BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
                 String msg2send = protocol.clientPack(fromUser,clientID,serverID,reqID);
                 if (msg2send != null) {
-                    System.out.println("Sending msg: " + msg2send);
+                    System.out.println("Sending msg " + reqID + " to " + serverID + " : " + fromUser);
                     out.println(msg2send);
                 } else {
                     System.out.println("Illegal input, input should be var=value");
@@ -66,10 +66,10 @@ public class Client {
                     }
                     synchronized (logging){
                         if(logging.contains(parsed.reqID)){
-                            System.out.println("The message has been received, duplication depress message from server" + parsed.serverID);
+                            System.out.println("msg_num " + parsed.reqID + " : Duplicate response received from replica S" + parsed.serverID);
                         } else {
                             logging.add(parsed.reqID);
-                            System.out.println("Received message from server "+parsed.serverID +" : " + parsed.var);
+                            System.out.println("Received message " +parsed.reqID + " from server "+parsed.serverID +" : " + parsed.var);
                         }
                     }
                 }
