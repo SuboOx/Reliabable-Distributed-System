@@ -24,7 +24,7 @@ public class ReplicaManager {
                 }
                 if (ss[0].equals("add")) {
                     try{
-                        Runtime.getRuntime().exec(new String[] {"cmd", "/c", "start java Server "+Integer.parseInt(ss[2])});
+                        Runtime.getRuntime().exec(new String[] {"cmd", "/c", "start java Server "+Integer.parseInt(ss[1]) + " "+Integer.parseInt(ss[2])});
                     }
                     catch(Exception e){
                         System.out.println("Can't launch Server");

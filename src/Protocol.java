@@ -5,13 +5,10 @@
  * Protocol: x=1 -----> ?ID?$x$#1#
  * */
 
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Protocol {
-    final private char idSpecifier = '?';
-    final private char varSpecifier = '$';
-    final private char valueSpecifier = '#';
+    final private String Spliter = "#";
 
     private static AtomicLong idCounter = new AtomicLong();
 
@@ -26,18 +23,24 @@ public class Protocol {
      * @param line input string to parse, format: var=value
      * @return null when error happens, otherwise packed string
      */
-    public String pack(String line, int clientID) {
+    public String clientPack(String line, int clientID, int serverID, int reqID) {
         //Handle exception
         if (line == null || packFormatChecker(line))
             return null;
 
-        String uniqueID = clientID*10000 + createID();
+        String uniqueID = clientID + Spliter + serverID + Spliter + reqID;
         //Locate =
         int loc = line.indexOf('=');
         String varString = line.substring(0, loc);
         String valueString = line.substring(loc + 1);
 
-        return idSpecifier + uniqueID + idSpecifier + varSpecifier + varString + varSpecifier + valueSpecifier + valueString + valueSpecifier + clientID;
+        return uniqueID + Spliter + varString + Spliter + valueString;
+    }
+
+
+    public String serverPack(String memory, int clientID, int serverID, int reqID) {
+        String uniqueID = clientID + Spliter + serverID + Spliter + reqID;
+        return uniqueID + Spliter + memory;
     }
 
     /**
@@ -47,13 +50,38 @@ public class Protocol {
      * @return null when error happens, otherwise unpacked variables
      * @apiNote
      */
-    public parseResult unpack(String line) {
-        String id = line.substring(line.indexOf(idSpecifier) + 1, line.lastIndexOf(idSpecifier));
-        String var = line.substring(line.indexOf(varSpecifier) + 1, line.lastIndexOf(varSpecifier));
-        String value = line.substring(line.indexOf(valueSpecifier) + 1, line.lastIndexOf(valueSpecifier));
-        String clientID = line.substring(line.lastIndexOf(valueSpecifier) + 1);
+    public parseResult clientUnpack(String line) {
+        String[] infos = line.split(Spliter);
 
-        return new parseResult(id, var, value, clientID);
+        if(infos.length != 4){
+            System.err.println("Invalid protocol message!");
+            System.exit(1);
+        }
+
+        String clientId = infos[0];
+        String serverId = infos[1];
+        String reqId = infos[2];
+        String message = infos[3];
+
+        return new parseResult(clientId, serverId, reqId, message,null);
+    }
+
+
+    public parseResult serverUnpack(String line) {
+        String[] infos = line.split(Spliter);
+
+        if(infos.length != 5){
+            System.err.println("Invalid protocol message!");
+            System.exit(1);
+        }
+
+        String clientId = infos[0];
+        String serverId = infos[1];
+        String reqId = infos[2];
+        String var = infos[3];
+        String value = infos[4];
+
+        return new parseResult(clientId, serverId, reqId, var, value);
     }
 
     /**
@@ -77,15 +105,18 @@ public class Protocol {
  * Class for returning multiple return value.
  */
 final class parseResult {
-    public String id;
+    public int clientID;
+    public int serverID;
+    public int reqID;
     public String var;
     public String value;
-    public String clientID;
 
-    parseResult(String id, String var, String value, String clientID) {
-        this.id = id;
+
+    parseResult(String clientId, String serverId, String reqId, String var, String value) {
+        this.clientID = Integer.valueOf(clientId);
+        this.serverID = Integer.valueOf(serverId);
+        this.reqID = Integer.valueOf(reqId);
         this.var = var;
         this.value = value;
-        this.clientID = clientID;
     }
 }

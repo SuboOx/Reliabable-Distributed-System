@@ -1,5 +1,3 @@
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 
 /**
@@ -35,8 +33,16 @@ public class DataBase {
     /**
      * List all data in database
      */
-    public void listAll() {
-        System.out.println(Collections.singletonList(memory));
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("{");
+        for(String key:memory.keySet()){
+            sb.append("[" + key + ":"+memory.get(key) + "],");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append("}");
+        return sb.toString();
     }
 
     DataBase() {

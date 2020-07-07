@@ -97,6 +97,7 @@ public class Server {
     /*Database and protocol, currently very naive*/
     private static DataBase db = new DataBase();
     private static Protocol protocol = new Protocol();
+    private static int serverID;
 
     /*Each client will be served by a thread in server, all of the threads shares database and protocol*/
     static class ServerThread extends Thread {
@@ -125,14 +126,19 @@ public class Server {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
-                        parseResult parsed = protocol.unpack(inputLine);
+                        parseResult parsed = protocol.serverUnpack(inputLine);
+                        if(parsed.serverID != serverID){
+                            System.err.println("The message have been sent to the wrong server!");
+                            System.exit(1);
+                        }
                         System.out.println("Received msg from client " + parsed.clientID + ":" + inputLine);
-                        System.out.println("Unpacked msg: " + parsed.var + "=" + parsed.value + ", id: " + parsed.id);
-                        out.println("msg: "+ inputLine + " received.");
+                        System.out.println("Unpacked msg: " + parsed.var + "=" + parsed.value + ", id: " + parsed.clientID + ":req" + parsed.reqID);
                         db.setVariable(parsed.var, parsed.value);
+                        String respond = protocol.serverPack(db.toString(),parsed.clientID,parsed.serverID,parsed.reqID);
+                        out.println(respond);
                         //print database
                         System.out.println("Current database:");
-                        db.listAll();
+                        System.out.println(db.toString());
                     } else {
                         clientSocket.close();
                         return;
@@ -147,13 +153,14 @@ public class Server {
     }
 
     public static void main(String[] args) {
-
-        if (args.length != 1) {
-            System.err.println("Usage: java Server <port number>");
+        if (args.length != 2) {
+            System.err.println("Usage: java Server <Server id> <port number>");
             System.exit(1);
         }
-        int portNumber = Integer.parseInt(args[0]);
-        System.out.println("<----Server started on port " + portNumber + "---->");
+        int portNumber = Integer.parseInt(args[1]);
+        serverID = Integer.parseInt(args[0]);
+        System.out.println("<----Server " + serverID +" started on port " + portNumber + "---->");
+
 
         /*Database and protocol here*/
         System.out.println("Initializing database and protocol...");

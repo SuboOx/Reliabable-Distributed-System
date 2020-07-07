@@ -24,6 +24,5 @@ class DataBaseTest {
     void testListAll() {
         this.db.setVariable("xa", "150");
         this.db.setVariable("xb", "10");
-        this.db.listAll();
     }
 }
