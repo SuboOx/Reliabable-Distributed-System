@@ -119,12 +119,12 @@ public class Client {
         
 
         for (int i = 0; i < 3; i++) {
-            try (Socket kkSocket = new Socket(hostName, portNumber[serverIDs[i]]);) {
+            try (Socket ignored = new Socket(hostName, portNumber[serverIDs[i]]);) {
                 validPort.add(portNumber[serverIDs[i]]);
                 System.err.println("Successfully connected to " + hostName + " : " + portNumber[serverIDs[i]]);
 
             } catch (UnknownHostException e) {
-                System.err.println("Don't know about host " + hostName);
+                System.err.println("Unknown host " + hostName);
             } catch (IOException e) {
                 System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + portNumber[serverIDs[i]]);
             }
