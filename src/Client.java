@@ -117,6 +117,8 @@ public class Client {
         serverIDs[1] = Integer.parseInt(args[3]);
         serverIDs[2] = Integer.parseInt(args[4]);
 
+
+        //check how many available server can be connected
         for (int i = 0; i < serverNumber; i++) {
             try (Socket kkSocket = new Socket(hostName, portNumber[serverIDs[i]]);) {
                 validPort.add(portNumber[serverIDs[i]]);
@@ -129,25 +131,26 @@ public class Client {
             }
         }
         System.out.println("There are "+validPort.size()+" well-functional server");
+
+
+        //send messages to server
         while (true){
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
             try {
                 String fromUser = stdIn.readLine();
                 if (fromUser.equals("exit"))
                     return;
-                for (int i = 0; i < 3; i++) {
+                for (int i = 0; i < serverNumber; i++) {
                     if(!validPort.contains(portNumber[serverIDs[i]]))
                         continue;
                     new Client.ClientThread(serverIDs[i],fromUser,reqcount).start();
                 }
-
             } catch (IOException e) {
                 System.err.println("Can't read from the client");
                 System.exit(1);
             }
             reqcount ++;
         }
-
     }
 }
 
