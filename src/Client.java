@@ -111,14 +111,14 @@ public class Client {
         initServerInfo();
         hostName = args[1];
         clientID = Integer.parseInt(args[0]);
-        int[] serverIDs = new int[3];
+        int[] serverIDs = new int[serverNumber];
         
         serverIDs[0] = Integer.parseInt(args[2]);
         serverIDs[1] = Integer.parseInt(args[3]);
         serverIDs[2] = Integer.parseInt(args[4]);
         
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < serverNumber; i++) {
             try (Socket kkSocket = new Socket(hostName, portNumber[serverIDs[i]]);) {
                 validPort.add(portNumber[serverIDs[i]]);
                 System.err.println("Successfully connected to " + hostName + " : " + portNumber[serverIDs[i]]);

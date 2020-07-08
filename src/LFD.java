@@ -40,7 +40,7 @@ public class LFD {
 
             if(nowstatus ^ laststatus){
                 //send message to GFD
-                //send2GFD(nowstatus);
+                //send2GFD(serverid,nowstatus);
                 laststatus = nowstatus;
             }
             Thread.sleep(heartbeatFreq);
