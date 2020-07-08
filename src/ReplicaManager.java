@@ -10,7 +10,7 @@ public class ReplicaManager {
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
             try {
                 String commandLine = stdIn.readLine();
-                String ss[] = new String[20];
+                String[] ss;
                 if (commandLine.equals("exit"))
                     break;
 

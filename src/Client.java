@@ -20,15 +20,15 @@ public class Client {
     private static int clientID;
     private static String hostName;
     private static HashSet<Integer> validPort = new HashSet<>();
-    private static int[] portNumber = new int[serverNumber]; 
-    private static int reqcount = 0;
+    private static int[] portNumber = new int[serverNumber];
+    private static int reqCount = 0;
     private static HashSet<Integer> logging = new HashSet<>();
-    
-    private static void initServerInfo(){
+
+    private static void initServerInfo() {
         portNumber[0] = 8888;
         portNumber[1] = 8889;
         portNumber[2] = 8890;
-        
+
     }
 
     static class ClientThread extends Thread {
@@ -49,7 +49,7 @@ public class Client {
             try (Socket kkSocket = new Socket(hostName, portNumber[serverID]);
                  PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
                  BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
-                String msg2send = protocol.clientPack(fromUser,clientID,serverID,reqID);
+                String msg2send = protocol.clientPack(fromUser, clientID, serverID, reqID);
                 if (msg2send != null) {
                     System.out.println("Sending msg " + reqID + " to " + serverID + " : " + fromUser);
                     out.println(msg2send);
@@ -60,16 +60,16 @@ public class Client {
                 //TODO: when no msg send, no msg received fro, server, Client will stop at this line waiting for server.
                 if ((fromServer = in.readLine()) != null) {
                     parseResult parsed = protocol.clientUnpack(fromServer);
-                    if(parsed.clientID != clientID){
+                    if (parsed.clientID != clientID) {
                         System.err.println("The message have been sent to the wrong client!");
                         System.exit(1);
                     }
-                    synchronized (logging){
-                        if(logging.contains(parsed.reqID)){
+                    synchronized (logging) {
+                        if (logging.contains(parsed.reqID)) {
                             System.out.println("msg_num " + parsed.reqID + " : Duplicate response received from replica S" + parsed.serverID);
                         } else {
                             logging.add(parsed.reqID);
-                            System.out.println("Received message " +parsed.reqID + " from server "+parsed.serverID +" : " + parsed.var);
+                            System.out.println("Received message " + parsed.reqID + " from server " + parsed.serverID + " : " + parsed.var);
                         }
                     }
                 }
@@ -100,19 +100,17 @@ public class Client {
     }
 
 
-
-
     public static void main(String[] args) {
         if (args.length != 5) {
             System.err.println("Usage: java Client <client id> <host name> <serverID 1> <severID 2> <serverID 3> ");
             System.exit(1);
         }
-    
+
         initServerInfo();
         hostName = args[1];
         clientID = Integer.parseInt(args[0]);
         int[] serverIDs = new int[serverNumber];
-        
+
         serverIDs[0] = Integer.parseInt(args[2]);
         serverIDs[1] = Integer.parseInt(args[3]);
         serverIDs[2] = Integer.parseInt(args[4]);
@@ -130,26 +128,26 @@ public class Client {
                 System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + portNumber[serverIDs[i]]);
             }
         }
-        System.out.println("There are "+validPort.size()+" well-functional server");
+        System.out.println("There are " + validPort.size() + " well-functional server");
 
 
         //send messages to server
-        while (true){
+        while (true) {
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
             try {
                 String fromUser = stdIn.readLine();
                 if (fromUser.equals("exit"))
                     return;
                 for (int i = 0; i < serverNumber; i++) {
-                    if(!validPort.contains(portNumber[serverIDs[i]]))
+                    if (!validPort.contains(portNumber[serverIDs[i]]))
                         continue;
-                    new Client.ClientThread(serverIDs[i],fromUser,reqcount).start();
+                    new Client.ClientThread(serverIDs[i], fromUser, reqCount).start();
                 }
             } catch (IOException e) {
                 System.err.println("Can't read from the client");
                 System.exit(1);
             }
-            reqcount ++;
+            reqCount++;
         }
     }
 }

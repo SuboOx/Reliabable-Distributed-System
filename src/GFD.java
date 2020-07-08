@@ -46,12 +46,12 @@ public class GFD {
                     inputLine = in.readLine();
                     if (inputLine != null) {
                         final parseResult parsed = protocol.GFDUnpack(inputLine);
-                        System.out.println("Received msg from LFD " + parsed.LFDId + ":" + parsed.operation + " "
-                                + parsed.serverId);
+                        System.out.println("Received msg from LFD " + parsed.LFDID + ":" + parsed.operation + " "
+                                + parsed.serverID);
                         if (parsed.operation.equals("add")) {
-                            membership.add(parsed.serverId);
+                            membership.add(parsed.serverID);
                         } else if (parsed.operation.equals("delete")) {
-                            membership.remove(parsed.serverId);
+                            membership.remove(parsed.serverID);
                             // send message to rm to create new one
                         } else {
                             System.err.println("The message contains wrong operation!");

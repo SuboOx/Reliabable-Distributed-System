@@ -11,7 +11,7 @@ import java.io.*;
 public class LFD {
     private static final int serverNumber = 3;
     private static int heartbeatCount = 0;
-    private static int LFDId;
+    private static int LFDID;
     private static String hostName;
     private static int[] portNumber = new int[serverNumber];
     private static int GFDport = 8891;
@@ -31,9 +31,9 @@ public class LFD {
         }
         initServerInfo();
         hostName = args[1];
-        LFDId = Integer.parseInt(args[0]);
-        int serverId = Integer.parseInt(args[2]);
-        int port = portNumber[serverId];
+        LFDID = Integer.parseInt(args[0]);
+        int serverID = Integer.parseInt(args[2]);
+        int port = portNumber[serverID];
         int timeout = Integer.parseInt(args[3]);
         int heartbeatFreq = 2000;
         boolean laststatus = false;
@@ -65,11 +65,11 @@ public class LFD {
                     BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
                     if (!laststatus) {
                         //Add replica
-                        bw.write(protocol.LFDPack(LFDId, "add", serverId));
+                        bw.write(protocol.LFDPack(LFDID, "add", serverID));
                         bw.flush();
                     } else {
                         //Delete replica
-                        bw.write(protocol.LFDPack(LFDId, "delete", serverId));
+                        bw.write(protocol.LFDPack(LFDID, "delete", serverID));
                         bw.flush();
                     }
                 } catch (UnknownHostException e) {
@@ -103,7 +103,7 @@ public class LFD {
             socket.close();
             isAlive = true;
 
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         return isAlive;
     }

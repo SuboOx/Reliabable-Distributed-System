@@ -3,18 +3,19 @@
  * Server side: Unpack command;
  *
  * Protocol: x=1 -----> ?ID?$x$#1#
+ * TODO: update document for protocol
  * */
 
-import java.util.concurrent.atomic.AtomicLong;
+//import java.util.concurrent.atomic.AtomicLong;
 
 public class Protocol {
-    final private String Spliter = "#";
+    final private String Splitter = "#";
 
-    private static AtomicLong idCounter = new AtomicLong();
+    //private static AtomicLong idCounter = new AtomicLong();
 
-    public static String createID() {
-        return String.valueOf(idCounter.getAndIncrement());
-    }
+//    public static String createID() {
+//        return String.valueOf(idCounter.getAndIncrement());
+//    }
 
     /**
      * TODO: checker is still a naive one, it does not check if line is legitimate
@@ -27,19 +28,19 @@ public class Protocol {
         if (line == null || packFormatChecker(line))
             return null;
 
-        String uniqueID = clientID + Spliter + serverID + Spliter + reqID;
+        String uniqueID = clientID + Splitter + serverID + Splitter + reqID;
         //Locate =
         int loc = line.indexOf('=');
         String varString = line.substring(0, loc);
         String valueString = line.substring(loc + 1);
 
-        return uniqueID + Spliter + varString + Spliter + valueString;
+        return uniqueID + Splitter + varString + Splitter + valueString;
     }
 
 
     public String serverPack(String memory, int clientID, int serverID, int reqID) {
-        String uniqueID = clientID + Spliter + serverID + Spliter + reqID;
-        return uniqueID + Spliter + memory;
+        String uniqueID = clientID + Splitter + serverID + Splitter + reqID;
+        return uniqueID + Splitter + memory;
     }
 
     /**
@@ -50,7 +51,7 @@ public class Protocol {
      * @apiNote
      */
     public parseResult clientUnpack(String line) {
-        String[] infos = line.split(Spliter);
+        String[] infos = line.split(Splitter);
 
         if (infos.length != 4) {
             System.err.println("Invalid protocol message!");
@@ -65,9 +66,12 @@ public class Protocol {
         return new parseResult(clientId, serverId, reqId, message, null);
     }
 
-
+    /**
+     * @param line input string to unpack in the server side, format: var=value
+     * @return null when error happens, otherwise unpacked variables
+     */
     public parseResult serverUnpack(String line) {
-        String[] infos = line.split(Spliter);
+        String[] infos = line.split(Splitter);
 
         if (infos.length != 5) {
             System.err.println("Invalid protocol message!");
@@ -83,15 +87,28 @@ public class Protocol {
         return new parseResult(clientId, serverId, reqId, var, value);
     }
 
+    /**
+     * Pack LFD message
+     *
+     * @param LFDId     Local Fault Detector ID
+     * @param operation either add or delete
+     * @param serverID  ID of server
+     * @return null when error happens, otherwise unpacked variables
+     */
     public String LFDPack(int LFDId, String operation, int serverID) {
-        //String uniqueID = LFDId + Spliter + operation + Spliter + serverID;
+        //String uniqueID = LFDId + Splitter + operation + Splitter + serverID;
 
-        return LFDId + Spliter + operation + Spliter + serverID;
+        return LFDId + Splitter + operation + Splitter + serverID;
     }
 
-    //GFD receive message from LFD
+    /**
+     * Global Fault Detector Unpack.
+     *
+     * @param line input string to unpack in the GFD(server) side, format: var=value
+     * @return null when error happens, otherwise unpacked variables
+     */
     public parseResult GFDUnpack(String line) {
-        String[] infos = line.split(Spliter);
+        String[] infos = line.split(Splitter);
 
         if (infos.length != 3) {
             System.err.println("Invalid protocol message!");
@@ -115,11 +132,8 @@ public class Protocol {
         if (inputLine.chars().filter(ch -> ch == '=').count() != 1)
             return true;
         // Make sure there is var and value
-        int idx = -1;
-        if (((idx = inputLine.indexOf('=')) == 0) || idx + 1 == inputLine.length())
-            return true;
-
-        return false;
+        int idx;
+        return ((idx = inputLine.indexOf('=')) == 0) || idx + 1 == inputLine.length();
     }
 }
 
@@ -135,20 +149,20 @@ final class parseResult {
 
 
     parseResult(String clientId, String serverId, String reqId, String var, String value) {
-        this.clientID = Integer.valueOf(clientId);
-        this.serverID = Integer.valueOf(serverId);
-        this.reqID = Integer.valueOf(reqId);
+        this.clientID = Integer.parseInt(clientId);
+        this.serverID = Integer.parseInt(serverId);
+        this.reqID = Integer.parseInt(reqId);
         this.var = var;
         this.value = value;
     }
 
-    public int LFDId;
+    /* Parse result for LFD and GFD*/
+    public int LFDID;
     public String operation;
-    public int serverId;
 
-    parseResult(String LFDId, String operation, String serverId) {
-        this.LFDId = Integer.valueOf(LFDId);
+    parseResult(String LFDID, String operation, String serverID) {
+        this.LFDID = Integer.parseInt(LFDID);
         this.operation = operation;
-        this.serverID = Integer.valueOf(serverId);
+        this.serverID = Integer.parseInt(serverID);
     }
 }
