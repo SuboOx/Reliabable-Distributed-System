@@ -12,8 +12,7 @@ public class Protocol {
 
     private static AtomicLong idCounter = new AtomicLong();
 
-    public static String createID()
-    {
+    public static String createID() {
         return String.valueOf(idCounter.getAndIncrement());
     }
 
@@ -53,7 +52,7 @@ public class Protocol {
     public parseResult clientUnpack(String line) {
         String[] infos = line.split(Spliter);
 
-        if(infos.length != 4){
+        if (infos.length != 4) {
             System.err.println("Invalid protocol message!");
             System.exit(1);
         }
@@ -63,14 +62,14 @@ public class Protocol {
         String reqId = infos[2];
         String message = infos[3];
 
-        return new parseResult(clientId, serverId, reqId, message,null);
+        return new parseResult(clientId, serverId, reqId, message, null);
     }
 
 
     public parseResult serverUnpack(String line) {
         String[] infos = line.split(Spliter);
 
-        if(infos.length != 5){
+        if (infos.length != 5) {
             System.err.println("Invalid protocol message!");
             System.exit(1);
         }
@@ -83,20 +82,21 @@ public class Protocol {
 
         return new parseResult(clientId, serverId, reqId, var, value);
     }
+
     //GFD receive message from LFD
     public parseResult GFDUnpack(String line) {
         String[] infos = line.split(Spliter);
 
-        if(infos.length != 3){
+        if (infos.length != 3) {
             System.err.println("Invalid protocol message!");
             System.exit(1);
         }
 
         String LFDId = infos[0];
-        String operation  = infos[1];
+        String operation = infos[1];
         String serverId = infos[2];
 
-        return new parseResult(LFDId,  operation, serverId);
+        return new parseResult(LFDId, operation, serverId);
     }
 
 
@@ -134,5 +134,15 @@ final class parseResult {
         this.reqID = Integer.valueOf(reqId);
         this.var = var;
         this.value = value;
+    }
+
+    public int LFDId;
+    public String operation;
+    public int serverId;
+
+    parseResult(String LFDId, String operation, String serverId) {
+        this.LFDId = Integer.valueOf(LFDId);
+        this.operation = operation;
+        this.serverID = Integer.valueOf(serverId);
     }
 }
