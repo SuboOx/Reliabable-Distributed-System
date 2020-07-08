@@ -140,19 +140,17 @@ public class Client {
                 String fromUser = stdIn.readLine();
                 if (fromUser.equals("exit"))
                     return;
-                for (int i = 0; i < 3; i++) {
+                for (int i = 0; i < serverNumber; i++) {
                     if(!validPort.contains(portNumber[serverIDs[i]]))
                         continue;
                     new Client.ClientThread(serverIDs[i],fromUser,reqcount).start();
                 }
-
             } catch (IOException e) {
                 System.err.println("Can't read from the client");
                 System.exit(1);
             }
             reqcount ++;
         }
-
     }
 }
 
