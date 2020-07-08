@@ -7,6 +7,8 @@
 import java.net.*;
 import java.io.*;
 
+
+
 public class LFD {
     private static final int serverNumber = 3;
     private static int heartbeatCount = 0;
@@ -30,8 +32,8 @@ public class LFD {
         initServerInfo();
         hostName = args[1];
         LFDId = Integer.parseInt(args[0]);
-        int serverID = Integer.parseInt(args[2]);
-        int port=portNumber[serverID];
+        int serverId = Integer.parseInt(args[2]);
+        int port=portNumber[serverId];
         int timeout = Integer.parseInt(args[3]);
         int heartbeatFreq = 2000;
         boolean laststatus = false;
@@ -54,33 +56,27 @@ public class LFD {
 
             if(nowstatus ^ laststatus){
                 //send message to GFD
-                try (Socket kkSocket = new Socket(hostName, GFDport);) {
+                try (Socket s = new Socket(hostName, GFDport);) {
                     System.err.println("Successfully connected to " + hostName + " : " + GFDport);
-
-                } catch (UnknownHostException e) {
-                    System.err.println("Unknown host " + hostName);
-                } catch (IOException e) {
-                    System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + GFDport);
-                }
-                if(!laststatus){
+                    InputStream is = s.getInputStream();
+                    OutputStream os = s.getOutputStream();
+                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                   if(!laststatus){
                     //Add replica
-
-
-
-
-                }else{
-                    //Delete replica
-
-
-
-
-
-
-
-
+                        bw.write(LFDId+" add "+serverId);
+                        bw.flush();
+                   }else {
+                       //Delete replica
+                       bw.write(LFDId+" delete "+serverId);
+                       bw.flush();
+                   }
+                    } catch (UnknownHostException e) {
+                        System.err.println("Unknown host " + hostName);
+                    } catch (IOException e) {
+                        System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + GFDport);
+                    }
 
                 }
-
                 //send2GFD(nowstatus);
                 laststatus = nowstatus;
             }
