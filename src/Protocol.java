@@ -83,6 +83,12 @@ public class Protocol {
         return new parseResult(clientId, serverId, reqId, var, value);
     }
 
+    public String LFDPack(int LFDId, String operation, int serverID) {
+        //String uniqueID = LFDId + Spliter + operation + Spliter + serverID;
+
+        return LFDId + Spliter + operation + Spliter + serverID;
+    }
+
     //GFD receive message from LFD
     public parseResult GFDUnpack(String line) {
         String[] infos = line.split(Spliter);

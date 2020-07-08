@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class GFD {
     /*Database of membership*/
-    private static Set<String> membership = new HashSet<>();
+    private static Set<Integer> membership = new HashSet<>();
     private static Protocol protocol = new Protocol();
 
     /*Each LFD will be served by a thread in GFD, all of the threads can update membership*/
@@ -60,7 +60,7 @@ public class GFD {
 
                         final int size = membership.size();
                         System.out.println("GFD: " + size + " members: ");
-                        for (final String value : set) {
+                        for (int value : membership) {
                             System.out.println(value);
                         }
                     } else {
@@ -79,7 +79,7 @@ public class GFD {
     public static void main(final String[] args) {
 
         if (args.length != 1) {
-            System.err.println("Usage: GFD <port number>");
+            System.err.println("Usage: GFD <port number>, Default: 8891");
             System.exit(1);
         }
         final int portNumber = Integer.parseInt(args[0]);
@@ -98,24 +98,12 @@ public class GFD {
 
         while (true) {
             try {
-                GFDSocket = new ServerSocket(portNumber);
+                LFDSocket = GFDSocket.accept();
             } catch (final IOException e) {
-                System.out.println(
-                        "Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
-                System.out.println(e.getMessage());
-            }
-
-            while (true) {
-                try {
-                    LFDSocket = serverSocket.accept();
-                } catch (final IOException e) {
-                    System.out.println("Error: " + e);
-                }
-                // new thread for a LFD
-                new GFDThread(LFDSocket).start();
+                System.out.println("Error: " + e);
             }
             // new thread for a LFD
-            new ServerThread(LFDSocket).start();
+            new GFDThread(LFDSocket).start();
         }
     }
 }
