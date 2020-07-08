@@ -15,13 +15,14 @@ import java.util.Set;
 
 public class GFD {
     /*Database of membership*/
-    private static Set<Integer> membership = new HashSet<>();
+    private static Set<String> membership = new HashSet<>();
+    private static Protocol protocol = new Protocol();
 
     /*Each LFD will be served by a thread in GFD, all of the threads can update membership*/
     static class GFDThread extends Thread {
         protected Socket LFDSocket;
 
-        public GFDThread(Socket LFDSocket) {
+        public GFDThread(final Socket LFDSocket) {
             this.LFDSocket = LFDSocket;
         }
 
@@ -32,40 +33,41 @@ public class GFD {
             try {
                 out = new PrintWriter(LFDSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(LFDSocket.getInputStream()));
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 System.err.println("Unable to create buffer");
                 return;
             }
 
             String inputLine;
-            Protocol protocol = new Protocol();
+            final Protocol protocol = new Protocol();
 
             while (true) {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
-                        parseResult parsed = protocol.GFDUnpack(inputLine);
-                        System.out.println("Received msg from LFD " + parsed.LFDId + ":" + parsed.operation + " " + parsed.serverId);
+                        final parseResult parsed = protocol.GFDUnpack(inputLine);
+                        System.out.println("Received msg from LFD " + parsed.LFDId + ":" + parsed.operation + " "
+                                + parsed.serverId);
                         if (parsed.operation.equals("add")) {
                             membership.add(parsed.serverId);
                         } else if (parsed.operation.equals("delete")) {
                             membership.remove(parsed.serverId);
-                            //send message to rm to create new one
+                            // send message to rm to create new one
                         } else {
                             System.err.println("The message contains wrong operation!");
                             System.exit(1);
                         }
 
-                        int size = membership.size();
+                        final int size = membership.size();
                         System.out.println("GFD: " + size + " members: ");
-                        for (String value : set) {
+                        for (final String value : set) {
                             System.out.println(value);
                         }
                     } else {
                         LFDSocket.close();
                         return;
                     }
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     System.err.println("Unable to read membership changed.");
                     return;
                 }
@@ -74,13 +76,13 @@ public class GFD {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
         if (args.length != 1) {
             System.err.println("Usage: GFD <port number>");
             System.exit(1);
         }
-        int portNumber = Integer.parseInt(args[0]);
+        final int portNumber = Integer.parseInt(args[0]);
         System.out.println("<----GFD started on port " + portNumber + "---->");
 
         ServerSocket GFDSocket = null;
@@ -88,7 +90,7 @@ public class GFD {
 
         try {
             GFDSocket = new ServerSocket(portNumber);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             System.out.println(
                     "Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
             System.out.println(e.getMessage());
@@ -96,9 +98,21 @@ public class GFD {
 
         while (true) {
             try {
-                LFDSocket = serverSocket.accept();
-            } catch (IOException e) {
-                System.out.println("Error: " + e);
+                GFDSocket = new ServerSocket(portNumber);
+            } catch (final IOException e) {
+                System.out.println(
+                        "Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
+                System.out.println(e.getMessage());
+            }
+
+            while (true) {
+                try {
+                    LFDSocket = serverSocket.accept();
+                } catch (final IOException e) {
+                    System.out.println("Error: " + e);
+                }
+                // new thread for a LFD
+                new GFDThread(LFDSocket).start();
             }
             // new thread for a LFD
             new ServerThread(LFDSocket).start();
