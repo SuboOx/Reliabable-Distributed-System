@@ -83,6 +83,22 @@ public class Protocol {
 
         return new parseResult(clientId, serverId, reqId, var, value);
     }
+    //GFD receive message from LFD
+    public parseResult GFDUnpack(String line) {
+        String[] infos = line.split(Spliter);
+
+        if(infos.length != 3){
+            System.err.println("Invalid protocol message!");
+            System.exit(1);
+        }
+
+        String LFDId = infos[0];
+        String operation  = infos[1];
+        String serverId = infos[2];
+
+        return new parseResult(LFDId,  operation, serverId);
+    }
+
 
     /**
      * @param inputLine string to check format

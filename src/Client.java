@@ -116,7 +116,6 @@ public class Client {
         serverIDs[0] = Integer.parseInt(args[2]);
         serverIDs[1] = Integer.parseInt(args[3]);
         serverIDs[2] = Integer.parseInt(args[4]);
-        
 
         for (int i = 0; i < serverNumber; i++) {
             try (Socket kkSocket = new Socket(hostName, portNumber[serverIDs[i]]);) {
@@ -124,7 +123,7 @@ public class Client {
                 System.err.println("Successfully connected to " + hostName + " : " + portNumber[serverIDs[i]]);
 
             } catch (UnknownHostException e) {
-                System.err.println("Don't know about host " + hostName);
+                System.err.println("Unknown host " + hostName);
             } catch (IOException e) {
                 System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + portNumber[serverIDs[i]]);
             }

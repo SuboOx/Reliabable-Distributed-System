@@ -11,12 +11,10 @@ public class DataBase {
     /**
      * @param var   key of the hash map
      * @param value value of the hash map
-     * @return TODO
      */
-    public int setVariable(String var, String value) {
+    public void setVariable(String var, String value) {
         /* Note that when key var already exists, it will be automatically updated.*/
         memory.put(var, value);
-        return 0;
     }
 
     /**
@@ -35,10 +33,10 @@ public class DataBase {
      */
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("{");
         for(String key:memory.keySet()){
-            sb.append("[" + key + ":"+memory.get(key) + "],");
+            sb.append("[").append(key).append(":").append(memory.get(key)).append("],");
         }
         sb.deleteCharAt(sb.length() - 1);
         sb.append("}");
