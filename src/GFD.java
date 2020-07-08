@@ -16,7 +16,7 @@ import java.util.Set;
 public class GFD {
     /*Database of membership*/
     private static Set<String> membership = new HashSet<>();
-
+    private static Protocol protocol = new Protocol();
 
     /*Each LFD will be served by a thread in GFD, all of the threads can update membership*/
     static class GFDThread extends Thread {
@@ -87,7 +87,7 @@ public class GFD {
             Socket LFDSocket = null;
 
             try {
-                GFDSocket = new GFDSocket(portNumber);
+                GFDSocket = new ServerSocket(portNumber);
             } catch (IOException e) {
                 System.out.println(
                         "Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
@@ -101,7 +101,7 @@ public class GFD {
                     System.out.println("Error: " + e);
                 }
                 // new thread for a LFD
-                new ServerThread(LFDSocket).start();
+                new GFDThread(LFDSocket).start();
             }
         }
     }
