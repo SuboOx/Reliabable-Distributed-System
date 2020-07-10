@@ -43,6 +43,11 @@ public class DataBase {
         return sb.toString();
     }
 
+    public void update(DataBase newdb){
+        this.memory.clear();
+        this.memory.putAll(newdb.memory);
+    }
+
     DataBase() {
         this.memory = new HashMap<>();
     }

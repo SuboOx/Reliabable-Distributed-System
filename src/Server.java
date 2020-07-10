@@ -1,16 +1,25 @@
-import java.net.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 public class Server {
     /*Database and protocol, currently very naive*/
     private static DataBase db = new DataBase();
     private static int serverID;
+    private static ArrayList<String> logging = new ArrayList<>();
 
     /*Each client will be served by a thread in server, all of the threads shares database and protocol*/
     static class ServerThread extends Thread {
         protected Socket clientSocket;
+        protected boolean isBackup;
 
-        public ServerThread(Socket clientSocket) {
+        public ServerThread(Socket clientSocket,boolean isBackup) {
+            this.isBackup = isBackup;
             this.clientSocket = clientSocket;
         }
 
@@ -33,6 +42,19 @@ public class Server {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
+
+                        //if this server is a backup
+                        if(isBackup){
+                            if(ischeckponit(inputLine)) {
+                                parseResult parsed = Protocol.checkpointUnpack();
+                                db.update(parsed.db);
+                            } else {
+                                logging.add(inputLine);
+                            }
+                            return;
+                        }
+
+                        //if the server is not a backup
                         parseResult parsed = Protocol.serverUnpack(inputLine);
                         if(parsed.serverID != serverID){
                             System.err.println("The message have been sent to the wrong server!");
@@ -59,10 +81,65 @@ public class Server {
         }
     }
 
+
+    static class CheckpointThread extends Thread {
+        protected int backupServerID;
+
+        public CheckpointThread(int serverID) {
+            this.backupServerID = serverID;
+        }
+
+        @Override
+        public void run() {
+            String checkpoint;
+            try (Socket kkSocket = new Socket(serverConstant.serverHostname[backupServerID], serverConstant.portNumber[backupServerID]);
+                 PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
+                 BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
+
+                //use synchronized to implement quiescence
+                synchronized (db){
+                    String msg2send = Protocol.checkpointPack(serverID, backupServerID, -1, db);
+                    if (msg2send != null) {
+                        System.out.println("Sending checkpoint msg to " + backupServerID);
+                        out.println(msg2send);
+                    } else {
+                        System.out.println("Illegal input, input should be var=value");
+                        return;
+                    }
+                }
+            } catch (UnknownHostException e) {
+                System.err.println("Unknown host for server " + backupServerID);
+
+            } catch (IOException e) {
+                System.err.println("Couldn't get I/O for the connection to " + serverConstant.serverHostname[backupServerID] + " : " + serverConstant.portNumber[backupServerID]);
+            }
+        }
+    }
+
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.err.println("Usage: java Server <Server id> <port number> (server only available for 0/1/2)");
+        boolean isPassive = false;
+        boolean isBackup = false;
+        int ckpt_freq = 4000;
+        int ckpt_timer = 0;
+        if (args.length != 2 || args.length != 3 || args.length != 4) {
+            System.err.println("Usage: java Server <Server id> <port number> (<p for primary or b for backup>) (checkpoint frequency)");
             System.exit(1);
+        }
+        if(args.length > 2){
+            isPassive = true;
+            if("p".equals(args[2])){
+                isBackup = false;
+            }
+            else if("b".equals(args[2])){
+                isBackup = true;
+            }
+            else {
+                System.err.println("Usage: java Server <Server id> <port number> (<primary ot backup>) (option: p for primary, b for back up))");
+                System.exit(1);
+            }
+        }
+        if(args.length == 4){
+            ckpt_freq = Integer.parseInt(args[3]);
         }
         int portNumber = Integer.parseInt(args[1]);
         serverID = Integer.parseInt(args[0]);
@@ -90,7 +167,17 @@ public class Server {
                 System.out.println("Error: " + e);
             }
             // new thread for a client
-            new ServerThread(clientSocket).start();
+            new ServerThread(clientSocket,isBackup).start();
+
+            //if this is a primary server,send checkpoint periodic
+            if(isPassive && ckpt_timer++ == ckpt_freq){
+                ckpt_timer = 0;
+                for(int i = 0; i < serverConstant.serverNumber; i ++){
+                    if(i != serverID){
+                        new CheckpointThread(i).start();
+                    }
+                }
+            }
         }
     }
 }
