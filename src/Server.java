@@ -137,6 +137,7 @@ public class Server {
         if (args.length != 2 && args.length != 3 && args.length != 4) {
             System.err.println("Usage: java Server <Server id> <port number> (<p for primary or b for backup>) (checkpoint frequency)");
             System.err.println("                   When no <p/b(optional)> is given, works in active replication mode.");
+            System.err.println("                   When no <checkpoint frequency> is given, default 20s.");
             System.exit(1);
         }
         if(args.length > 2){
