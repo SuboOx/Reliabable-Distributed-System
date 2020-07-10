@@ -18,7 +18,7 @@ public class Server {
         protected Socket clientSocket;
         protected boolean isBackup;
 
-        public ServerThread(Socket clientSocket,boolean isBackup) {
+        public ServerThread(Socket clientSocket, boolean isBackup) {
             this.isBackup = isBackup;
             this.clientSocket = clientSocket;
         }
@@ -44,8 +44,8 @@ public class Server {
                     if (inputLine != null) {
 
                         //if this server is a backup
-                        if(isBackup){
-                            if(Protocol.isCheckpointMsg(inputLine)) {
+                        if (isBackup) {
+                            if (Protocol.isCheckpointMsg(inputLine)) {
                                 parseResult parsed = Protocol.checkpointUnpack(inputLine);
                                 db.update(parsed.db);
                                 System.out.println("Received checkpoint msg from server " + parsed.serverID);
@@ -90,7 +90,7 @@ public class Server {
         protected int backupServerID;
         protected int ckpt_freq;
 
-        public CheckpointThread(int serverID,int ckpt_freq) {
+        public CheckpointThread(int serverID, int ckpt_freq) {
             this.backupServerID = serverID;
             this.ckpt_freq = ckpt_freq;
         }
@@ -134,27 +134,26 @@ public class Server {
     public static void main(String[] args) {
         boolean isPassive = false;
         boolean isBackup = false;
-        int ckpt_freq = 20000;
+        int ckpt_freq = 10000;
         if (args.length != 2 && args.length != 3 && args.length != 4) {
             System.err.println("Usage: java Server <Server id> <port number> (<p for primary or b for backup>) (checkpoint frequency)");
             System.err.println("                   When no <p/b(optional)> is given, works in active replication mode.");
             System.err.println("                   When no <checkpoint frequency> is given, default 20s.");
             System.exit(1);
         }
-        if(args.length > 2){
+        if (args.length > 2) {
             isPassive = true;
-            if("p".equals(args[2])){
+            isPassive = true;
+            if ("p".equals(args[2])) {
                 isBackup = false;
-            }
-            else if("b".equals(args[2])){
+            } else if ("b".equals(args[2])) {
                 isBackup = true;
-            }
-            else {
+            } else {
                 System.err.println("Usage: java Server <Server id> <port number> (<primary ot backup>) (option: p for primary, b for back up))");
                 System.exit(1);
             }
         }
-        if(args.length == 4){
+        if (args.length == 4) {
             ckpt_freq = Integer.parseInt(args[3]);
         }
         int portNumber = Integer.parseInt(args[1]);
@@ -181,10 +180,10 @@ public class Server {
             System.out.println(e.getMessage());
         }
 
-        if(isPassive && !isBackup){
-            for(int i = 0; i < serverConstant.serverNumber; i ++){
-                if(i != serverID){
-                    new CheckpointThread(i,ckpt_freq).start();
+        if (isPassive && !isBackup) {
+            for (int i = 0; i < serverConstant.serverNumber; i++) {
+                if (i != serverID) {
+                    new CheckpointThread(i, ckpt_freq).start();
                 }
             }
         }
@@ -196,7 +195,7 @@ public class Server {
                 System.out.println("Error: " + e);
             }
             // new thread for a client
-            new ServerThread(clientSocket,isBackup).start();
+            new ServerThread(clientSocket, isBackup).start();
         }
     }
 }

@@ -34,6 +34,9 @@ public class DataBase {
      */
     @Override
     public String toString() {
+        if (memory.isEmpty()) {
+            return "DataBase is empty.";
+        }
         StringBuffer sb = new StringBuffer();
         sb.append("{");
         for (String key : memory.keySet()) {
