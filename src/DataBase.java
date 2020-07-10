@@ -47,15 +47,19 @@ public class DataBase {
     /**
      * @update the memory
      */
-    public void update(DataBase newdb){
+    public void update(DataBase newdb) {
+        if (newdb == null) {
+            return;
+        }
         this.memory.clear();
         this.memory.putAll(newdb.memory);
+    }
 
     /**
      * @return all keys in a set
      */
     Set<String> getAllKeys() {
-        return memory.keySet();2ef
+        return memory.keySet();
     }
 
     DataBase() {

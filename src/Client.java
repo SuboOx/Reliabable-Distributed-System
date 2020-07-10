@@ -110,7 +110,6 @@ public class Client {
             try (Socket kkSocket = new Socket(hostName, serverConstant.portNumber[serverIDs[i]]);) {
                 validPort.add(serverConstant.portNumber[serverIDs[i]]);
                 System.err.println("Successfully connected to " + hostName + " : " + serverConstant.portNumber[serverIDs[i]]);
-
             } catch (UnknownHostException e) {
                 System.err.println("Unknown host " + hostName);
             } catch (IOException e) {

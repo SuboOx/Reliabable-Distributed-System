@@ -45,9 +45,13 @@ public class Server {
 
                         //if this server is a backup
                         if(isBackup){
-                            if(ischeckponit(inputLine)) {
-                                parseResult parsed = Protocol.checkpointUnpack();
+                            if(Protocol.isCheckpointMsg(inputLine)) {
+                                parseResult parsed = Protocol.checkpointUnpack(inputLine);
                                 db.update(parsed.db);
+                                System.out.println("Received checkpoint msg from server " + parsed.serverID);
+                                //print database
+                                System.out.println("Current database:");
+                                System.out.println(db.toString());
                             } else {
                                 logging.add(inputLine);
                             }
@@ -84,34 +88,44 @@ public class Server {
 
     static class CheckpointThread extends Thread {
         protected int backupServerID;
+        protected int ckpt_freq;
 
-        public CheckpointThread(int serverID) {
+        public CheckpointThread(int serverID,int ckpt_freq) {
             this.backupServerID = serverID;
+            this.ckpt_freq = ckpt_freq;
         }
 
         @Override
         public void run() {
-            String checkpoint;
-            try (Socket kkSocket = new Socket(serverConstant.serverHostname[backupServerID], serverConstant.portNumber[backupServerID]);
-                 PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
-                 BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
+            while (true) {
+                String checkpoint;
+                try (Socket kkSocket = new Socket(serverConstant.serverHostname[backupServerID], serverConstant.portNumber[backupServerID]);
+                     PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
+                     BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
 
-                //use synchronized to implement quiescence
-                synchronized (db){
-                    String msg2send = Protocol.checkpointPack(serverID, backupServerID, -1, db);
-                    if (msg2send != null) {
-                        System.out.println("Sending checkpoint msg to " + backupServerID);
-                        out.println(msg2send);
-                    } else {
-                        System.out.println("Illegal input, input should be var=value");
-                        return;
+                    //use synchronized to implement quiescence
+                    synchronized (db) {
+                        String msg2send = Protocol.checkpointPack(serverID, backupServerID, -1, db);
+                        if (msg2send != null) {
+                            System.out.println("Sending checkpoint msg to " + backupServerID);
+                            out.println(msg2send);
+                        } else {
+                            System.out.println("Illegal input, input should be var=value");
+                            return;
+                        }
                     }
-                }
-            } catch (UnknownHostException e) {
-                System.err.println("Unknown host for server " + backupServerID);
+                } catch (UnknownHostException e) {
+                    System.err.println("Unknown host for server " + backupServerID);
 
-            } catch (IOException e) {
-                System.err.println("Couldn't get I/O for the connection to " + serverConstant.serverHostname[backupServerID] + " : " + serverConstant.portNumber[backupServerID]);
+                } catch (IOException e) {
+                    System.err.println("Couldn't get I/O for the connection to " + serverConstant.serverHostname[backupServerID] + " : " + serverConstant.portNumber[backupServerID]);
+                }
+                try {
+                    Thread.sleep(ckpt_freq);
+                } catch (InterruptedException e) {
+                    System.err.println("Interrupted!");
+                    System.exit(1);
+                }
             }
         }
     }
@@ -119,9 +133,8 @@ public class Server {
     public static void main(String[] args) {
         boolean isPassive = false;
         boolean isBackup = false;
-        int ckpt_freq = 4000;
-        int ckpt_timer = 0;
-        if (args.length != 2 || args.length != 3 || args.length != 4) {
+        int ckpt_freq = 20000;
+        if (args.length != 2 && args.length != 3 && args.length != 4) {
             System.err.println("Usage: java Server <Server id> <port number> (<p for primary or b for backup>) (checkpoint frequency)");
             System.err.println("                   When no <p/b(optional)> is given, works in active replication mode.");
             System.exit(1);
@@ -144,28 +157,8 @@ public class Server {
         }
         int portNumber = Integer.parseInt(args[1]);
         serverID = Integer.parseInt(args[0]);
-        int chkptInterval = 10000;// Default Checkpoint interval
-        String passiveReplicationMode = "OFF";
 
         System.out.println("<----Server " + serverID + " started on port " + portNumber + "---->");
-        //If the server is the primary one
-        if (args.length > 2) {
-            if (args[2].equals("primary")) {
-                if (args.length == 4) {
-                    chkptInterval = Integer.parseInt(args[3]);
-                }
-                System.out.println("Server works as primary, checkpoint interval: " + chkptInterval + " ms");
-                passiveReplicationMode = "PRIMARY";
-            } else if (args[2].equals("replica")) {
-                System.out.println("Server works as replica.");
-                passiveReplicationMode = "REPLICA";
-            } else {
-                System.err.println("Argument 3 is either primary or replica, default: active replication.");
-                System.exit(1);
-            }
-        } else {
-            System.out.println("Server works in active replication mode.");
-        }
 
         /*
          * TODO: use passiveReplicationMode
@@ -186,6 +179,14 @@ public class Server {
             System.out.println(e.getMessage());
         }
 
+        if(isPassive && !isBackup){
+            for(int i = 0; i < serverConstant.serverNumber; i ++){
+                if(i != serverID){
+                    new CheckpointThread(i,ckpt_freq).start();
+                }
+            }
+        }
+
         while (true) {
             try {
                 clientSocket = serverSocket.accept();
@@ -196,14 +197,7 @@ public class Server {
             new ServerThread(clientSocket,isBackup).start();
 
             //if this is a primary server,send checkpoint periodic
-            if(isPassive && ckpt_timer++ == ckpt_freq){
-                ckpt_timer = 0;
-                for(int i = 0; i < serverConstant.serverNumber; i ++){
-                    if(i != serverID){
-                        new CheckpointThread(i).start();
-                    }
-                }
-            }
+
         }
     }
 }
