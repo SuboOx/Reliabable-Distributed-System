@@ -196,9 +196,6 @@ public class Server {
             }
             // new thread for a client
             new ServerThread(clientSocket,isBackup).start();
-
-            //if this is a primary server,send checkpoint periodic
-
         }
     }
 }
