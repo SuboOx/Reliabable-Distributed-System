@@ -39,8 +39,6 @@ public class LFD {
         boolean laststatus = false;
         boolean nowstatus;
 
-        Protocol protocol = new Protocol();
-
         //choose default or set a heartbeat frequency
         if (args.length == 5) {
             heartbeatFreq = Integer.parseInt(args[4]);// Start from 0
@@ -65,11 +63,11 @@ public class LFD {
                     BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
                     if (!laststatus) {
                         //Add replica
-                        bw.write(protocol.LFDPack(LFDID, "add", serverID));
+                        bw.write(Protocol.LFDPack(LFDID, "add", serverID));
                         bw.flush();
                     } else {
                         //Delete replica
-                        bw.write(protocol.LFDPack(LFDID, "delete", serverID));
+                        bw.write(Protocol.LFDPack(LFDID, "delete", serverID));
                         bw.flush();
                     }
                 } catch (UnknownHostException e) {

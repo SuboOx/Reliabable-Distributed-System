@@ -16,7 +16,6 @@ import java.util.Set;
 public class GFD {
     /*Database of membership*/
     private static Set<Integer> membership = new HashSet<>();
-    private static Protocol protocol = new Protocol();
 
     /*Each LFD will be served by a thread in GFD, all of the threads can update membership*/
     static class GFDThread extends Thread {
@@ -39,13 +38,12 @@ public class GFD {
             }
 
             String inputLine;
-            final Protocol protocol = new Protocol();
 
             while (true) {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
-                        final parseResult parsed = protocol.GFDUnpack(inputLine);
+                        final parseResult parsed = Protocol.GFDUnpack(inputLine);
                         System.out.println("Received msg from LFD " + parsed.LFDID + ":" + parsed.operation + " "
                                 + parsed.serverID);
                         if (parsed.operation.equals("add")) {

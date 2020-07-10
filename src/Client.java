@@ -44,12 +44,12 @@ public class Client {
 
         @Override
         public void run() {
-            Protocol protocol = new Protocol();
+//            Protocol protocol = new Protocol();
             String fromServer;
             try (Socket kkSocket = new Socket(hostName, portNumber[serverID]);
                  PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
                  BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
-                String msg2send = protocol.clientPack(fromUser, clientID, serverID, reqID);
+                String msg2send = Protocol.clientPack(fromUser, clientID, serverID, reqID);
                 if (msg2send != null) {
                     System.out.println("Sending msg " + reqID + " to " + serverID + " : " + fromUser);
                     out.println(msg2send);
@@ -59,7 +59,7 @@ public class Client {
                 }
                 //TODO: when no msg send, no msg received fro, server, Client will stop at this line waiting for server.
                 if ((fromServer = in.readLine()) != null) {
-                    parseResult parsed = protocol.clientUnpack(fromServer);
+                    parseResult parsed = Protocol.clientUnpack(fromServer);
                     if (parsed.clientID != clientID) {
                         System.err.println("The message have been sent to the wrong client!");
                         System.exit(1);

@@ -9,7 +9,7 @@
 //import java.util.concurrent.atomic.AtomicLong;
 
 public class Protocol {
-    final private String Splitter = "#";
+    final private static String Splitter = "#";
 
     //private static AtomicLong idCounter = new AtomicLong();
 
@@ -23,7 +23,7 @@ public class Protocol {
      * @param line input string to parse, format: var=value
      * @return null when error happens, otherwise packed string
      */
-    public String clientPack(String line, int clientID, int serverID, int reqID) {
+    public static String clientPack(String line, int clientID, int serverID, int reqID) {
         //Handle exception
         if (line == null || packFormatChecker(line))
             return null;
@@ -38,7 +38,7 @@ public class Protocol {
     }
 
 
-    public String serverPack(String memory, int clientID, int serverID, int reqID) {
+    public static String serverPack(String memory, int clientID, int serverID, int reqID) {
         String uniqueID = clientID + Splitter + serverID + Splitter + reqID;
         return uniqueID + Splitter + memory;
     }
@@ -50,7 +50,7 @@ public class Protocol {
      * @return null when error happens, otherwise unpacked variables
      * @apiNote
      */
-    public parseResult clientUnpack(String line) {
+    public static parseResult clientUnpack(String line) {
         String[] infos = line.split(Splitter);
 
         if (infos.length != 4) {
@@ -70,7 +70,7 @@ public class Protocol {
      * @param line input string to unpack in the server side, format: var=value
      * @return null when error happens, otherwise unpacked variables
      */
-    public parseResult serverUnpack(String line) {
+    public static parseResult serverUnpack(String line) {
         String[] infos = line.split(Splitter);
 
         if (infos.length != 5) {
@@ -95,7 +95,7 @@ public class Protocol {
      * @param serverID  ID of server
      * @return null when error happens, otherwise unpacked variables
      */
-    public String LFDPack(int LFDId, String operation, int serverID) {
+    public static String LFDPack(int LFDId, String operation, int serverID) {
         //String uniqueID = LFDId + Splitter + operation + Splitter + serverID;
 
         return LFDId + Splitter + operation + Splitter + serverID;
@@ -107,7 +107,7 @@ public class Protocol {
      * @param line input string to unpack in the GFD(server) side, format: var=value
      * @return null when error happens, otherwise unpacked variables
      */
-    public parseResult GFDUnpack(String line) {
+    public static parseResult GFDUnpack(String line) {
         String[] infos = line.split(Splitter);
 
         if (infos.length != 3) {
@@ -127,7 +127,7 @@ public class Protocol {
      * @param inputLine string to check format
      * @return true when not passed check, otherwise false
      */
-    public boolean packFormatChecker(String inputLine) {
+    public static boolean packFormatChecker(String inputLine) {
         // Make sure there is one and only one =
         if (inputLine.chars().filter(ch -> ch == '=').count() != 1)
             return true;
