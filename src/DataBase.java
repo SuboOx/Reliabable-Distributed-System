@@ -33,7 +33,7 @@ public class DataBase {
      */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         sb.append("{");
         for(String key:memory.keySet()){
             sb.append("[").append(key).append(":").append(memory.get(key)).append("],");

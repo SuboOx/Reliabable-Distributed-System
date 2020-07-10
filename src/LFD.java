@@ -9,19 +9,9 @@ import java.io.*;
 
 
 public class LFD {
-    private static final int serverNumber = 3;
     private static int heartbeatCount = 0;
     private static int LFDID;
     private static String hostName;
-    private static int[] portNumber = new int[serverNumber];
-    private static int GFDport = 8891;
-
-    private static void initServerInfo() {
-        portNumber[0] = 8888;
-        portNumber[1] = 8889;
-        portNumber[2] = 8890;
-
-    }
 
     public static void main(String[] args) throws InterruptedException {
 
@@ -29,11 +19,10 @@ public class LFD {
             System.err.println("Usage: java LFD <LFD id> <host name> <serverID> <time out> (<heartbeat freq>)");
             System.exit(1);
         }
-        initServerInfo();
         hostName = args[1];
         LFDID = Integer.parseInt(args[0]);
         int serverID = Integer.parseInt(args[2]);
-        int port = portNumber[serverID];
+        int port = serverConstant.portNumber[serverID];
         int timeout = Integer.parseInt(args[3]);
         int heartbeatFreq = 2000;
         boolean laststatus = false;
@@ -56,8 +45,8 @@ public class LFD {
 
             if (nowstatus ^ laststatus) {
                 //send message to GFD
-                try (Socket s = new Socket(hostName, GFDport);) {
-                    System.err.println("Successfully connected to " + hostName + " : " + GFDport);
+                try (Socket s = new Socket(hostName, serverConstant.GFDport);) {
+                    System.err.println("Successfully connected to " + hostName + " : " + serverConstant.GFDport);
                     InputStream is = s.getInputStream();
                     OutputStream os = s.getOutputStream();
                     BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
@@ -73,7 +62,7 @@ public class LFD {
                 } catch (UnknownHostException e) {
                     System.err.println("Unknown host " + hostName);
                 } catch (IOException e) {
-                    System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + GFDport);
+                    System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + serverConstant.GFDport);
                 }
 
             }

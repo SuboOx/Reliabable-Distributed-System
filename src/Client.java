@@ -15,21 +15,11 @@ import java.util.HashSet;
 
 
 public class Client {
-    private static final int serverNumber = 3;
-
     private static int clientID;
     private static String hostName;
     private static HashSet<Integer> validPort = new HashSet<>();
-    private static int[] portNumber = new int[serverNumber];
     private static int reqCount = 0;
     private static HashSet<Integer> logging = new HashSet<>();
-
-    private static void initServerInfo() {
-        portNumber[0] = 8888;
-        portNumber[1] = 8889;
-        portNumber[2] = 8890;
-
-    }
 
     static class ClientThread extends Thread {
         int serverID;
@@ -46,7 +36,7 @@ public class Client {
         public void run() {
 //            Protocol protocol = new Protocol();
             String fromServer;
-            try (Socket kkSocket = new Socket(hostName, portNumber[serverID]);
+            try (Socket kkSocket = new Socket(hostName, serverConstant.portNumber[serverID]);
                  PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
                  BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
                 String msg2send = Protocol.clientPack(fromUser, clientID, serverID, reqID);
@@ -76,7 +66,7 @@ public class Client {
             } catch (UnknownHostException e) {
                 System.err.println("Don't know about host " + hostName);
                 synchronized (validPort) {
-                    validPort.remove(portNumber[serverID]);
+                    validPort.remove(serverConstant.portNumber[serverID]);
                     System.out.println("There are " + validPort.size() + " well-functional server now.");
                     if (validPort.size() == 0) {
                         System.out.println("No server available! Exit!");
@@ -85,9 +75,9 @@ public class Client {
                 }
 
             } catch (IOException e) {
-                System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + portNumber[serverID]);
+                System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + serverConstant.portNumber[serverID]);
                 synchronized (this) {
-                    validPort.remove(portNumber[serverID]);
+                    validPort.remove(serverConstant.portNumber[serverID]);
                     System.out.println("There are " + validPort.size() + " well-functional server now.");
                     if (validPort.size() == 0) {
                         System.out.println("No server available! Exit!");
@@ -106,10 +96,9 @@ public class Client {
             System.exit(1);
         }
 
-        initServerInfo();
         hostName = args[1];
         clientID = Integer.parseInt(args[0]);
-        int[] serverIDs = new int[serverNumber];
+        int[] serverIDs = new int[serverConstant.serverNumber];
 
         serverIDs[0] = Integer.parseInt(args[2]);
         serverIDs[1] = Integer.parseInt(args[3]);
@@ -117,15 +106,15 @@ public class Client {
 
 
         //check how many available server can be connected
-        for (int i = 0; i < serverNumber; i++) {
-            try (Socket kkSocket = new Socket(hostName, portNumber[serverIDs[i]]);) {
-                validPort.add(portNumber[serverIDs[i]]);
-                System.err.println("Successfully connected to " + hostName + " : " + portNumber[serverIDs[i]]);
+        for (int i = 0; i < serverConstant.serverNumber; i++) {
+            try (Socket kkSocket = new Socket(hostName, serverConstant.portNumber[serverIDs[i]]);) {
+                validPort.add(serverConstant.portNumber[serverIDs[i]]);
+                System.err.println("Successfully connected to " + hostName + " : " + serverConstant.portNumber[serverIDs[i]]);
 
             } catch (UnknownHostException e) {
                 System.err.println("Unknown host " + hostName);
             } catch (IOException e) {
-                System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + portNumber[serverIDs[i]]);
+                System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + serverConstant.portNumber[serverIDs[i]]);
             }
         }
         System.out.println("There are " + validPort.size() + " well-functional server");
@@ -138,8 +127,8 @@ public class Client {
                 String fromUser = stdIn.readLine();
                 if (fromUser.equals("exit"))
                     return;
-                for (int i = 0; i < serverNumber; i++) {
-                    if (!validPort.contains(portNumber[serverIDs[i]]))
+                for (int i = 0; i < serverConstant.serverNumber; i++) {
+                    if (!validPort.contains(serverConstant.portNumber[serverIDs[i]]))
                         continue;
                     new Client.ClientThread(serverIDs[i], fromUser, reqCount).start();
                 }
