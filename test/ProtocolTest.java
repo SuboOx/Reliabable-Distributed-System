@@ -1,10 +1,13 @@
-//import org.junit.jupiter.api.Test;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//
-//class ProtocolTest {
-//
-//    public void testPack() {
+import org.junit.jupiter.api.Test;
+
+import javax.xml.crypto.Data;
+import java.util.HashMap;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class ProtocolTest {
+
+    //    public void testPack() {
 //        String line = "xa=150";
 //        int clientID = 15;
 //        String ans = "$xa$#150#15";
@@ -30,6 +33,8 @@
 //    }
 //
 //
+//
+//
 //    void testFormatChecker() {
 //        Protocol p = new Protocol();
 //        assertTrue(p.packFormatChecker("x==1"));
@@ -39,4 +44,11 @@
 //        assertTrue(p.packFormatChecker("="));
 //        assertTrue(p.packFormatChecker(""));
 //    }
-//}
+    @Test
+    public void testCheckpointPack() {
+        String s = Protocol.checkpointPack(1, 1, -1, new DataBase());
+
+        assertEquals("1#1#-1#", s);
+
+    }
+}

@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.Set;
 
 /**
  * This file provide interface for server database.
@@ -35,12 +36,19 @@ public class DataBase {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("{");
-        for(String key:memory.keySet()){
+        for (String key : memory.keySet()) {
             sb.append("[").append(key).append(":").append(memory.get(key)).append("],");
         }
         sb.deleteCharAt(sb.length() - 1);
         sb.append("}");
         return sb.toString();
+    }
+
+    /**
+     * @return all keys in a set
+     */
+    Set<String> getAllKeys() {
+        return memory.keySet();
     }
 
     DataBase() {

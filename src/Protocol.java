@@ -63,7 +63,7 @@ public class Protocol {
         String reqId = infos[2];
         String message = infos[3];
 
-        return new parseResult(clientId, serverId, reqId, message, null);
+        return new parseResult(clientId, serverId, reqId, message);
     }
 
     /**
@@ -122,6 +122,54 @@ public class Protocol {
         return new parseResult(LFDId, operation, serverId);
     }
 
+    /**
+     *
+     */
+    public static String checkpointPack(int primaryServerID, int backupServerID, int reqID, DataBase db) {
+        //reqID is an indicator of checkpointing message
+        if (reqID != -1)
+            return null;
+
+        StringBuilder packedDB = new StringBuilder();
+
+        for (String key : db.getAllKeys()) {
+            packedDB.append(key).append(Splitter).append(db.getVariable(key));
+        }
+
+        return primaryServerID + Splitter + backupServerID + Splitter + reqID + Splitter + packedDB;
+    }
+
+    public static parseResult checkpointUnpack(String line) {
+        String[] infos = line.split(Splitter);
+
+        if (infos.length < 3) {
+            System.err.println("Invalid protocol message!");
+            System.exit(1);
+        }
+
+        String primaryServerID = infos[0];
+        String backupServerID = infos[1];
+
+        DataBase db = null;
+        if (infos.length > 3) {
+            db = new DataBase();
+            for (int i = 4; i < infos.length; i++) {
+                db.setVariable(infos[i - 1], infos[i]);
+            }
+        }
+        return new parseResult(primaryServerID, backupServerID, db);
+    }
+
+    public static boolean isCheckpointMsg(String line) {
+        String[] infos = line.split(Splitter);
+
+        if (infos.length < 3) {
+            System.err.println("Not a legal msg, isCheckpointMsg() says.");
+            System.exit(1);
+        }
+
+        return infos[2].equals("-1");
+    }
 
     /**
      * @param inputLine string to check format
@@ -156,6 +204,15 @@ final class parseResult {
         this.value = value;
     }
 
+    //ParseResult for client unpack
+    //ParseResult for client unpack
+    parseResult(String clientId, String serverId, String reqId, String var) {
+        this.clientID = Integer.parseInt(clientId);
+        this.serverID = Integer.parseInt(serverId);
+        this.reqID = Integer.parseInt(reqId);
+        this.var = var;
+    }
+
     /* Parse result for LFD and GFD*/
     public int LFDID;
     public String operation;
@@ -164,5 +221,16 @@ final class parseResult {
         this.LFDID = Integer.parseInt(LFDID);
         this.operation = operation;
         this.serverID = Integer.parseInt(serverID);
+    }
+
+    /* Parse result for checkpoint message*/
+    public DataBase db = null;
+    public int backupServerID;
+    public int primaryServerID;
+
+    parseResult(String primaryServerID, String backupServerID, DataBase db) {
+        this.primaryServerID = Integer.parseInt(primaryServerID);
+        this.backupServerID = Integer.parseInt(backupServerID);
+        this.db = db;
     }
 }
