@@ -56,14 +56,14 @@ public class Server {
 
                         //if the server is not a backup
                         parseResult parsed = Protocol.serverUnpack(inputLine);
-                        if(parsed.serverID != serverID){
+                        if (parsed.serverID != serverID) {
                             System.err.println("The message have been sent to the wrong server!");
                             System.exit(1);
                         }
                         System.out.println("Received msg from client " + parsed.clientID + ":" + inputLine);
                         System.out.println("Unpacked msg: " + parsed.var + "=" + parsed.value + ", id: " + parsed.clientID + ":req" + parsed.reqID);
                         db.setVariable(parsed.var, parsed.value);
-                        String respond = Protocol.serverPack(db.toString(),parsed.clientID,parsed.serverID,parsed.reqID);
+                        String respond = Protocol.serverPack(db.toString(), parsed.clientID, parsed.serverID, parsed.reqID);
                         out.println(respond);
                         //print database
                         System.out.println("Current database:");
@@ -123,6 +123,7 @@ public class Server {
         int ckpt_timer = 0;
         if (args.length != 2 || args.length != 3 || args.length != 4) {
             System.err.println("Usage: java Server <Server id> <port number> (<p for primary or b for backup>) (checkpoint frequency)");
+            System.err.println("                   When no <p/b(optional)> is given, works in active replication mode.");
             System.exit(1);
         }
         if(args.length > 2){
@@ -143,7 +144,32 @@ public class Server {
         }
         int portNumber = Integer.parseInt(args[1]);
         serverID = Integer.parseInt(args[0]);
-        System.out.println("<----Server " + serverID +" started on port " + portNumber + "---->");
+        int chkptInterval = 10000;// Default Checkpoint interval
+        String passiveReplicationMode = "OFF";
+
+        System.out.println("<----Server " + serverID + " started on port " + portNumber + "---->");
+        //If the server is the primary one
+        if (args.length > 2) {
+            if (args[2].equals("primary")) {
+                if (args.length == 4) {
+                    chkptInterval = Integer.parseInt(args[3]);
+                }
+                System.out.println("Server works as primary, checkpoint interval: " + chkptInterval + " ms");
+                passiveReplicationMode = "PRIMARY";
+            } else if (args[2].equals("replica")) {
+                System.out.println("Server works as replica.");
+                passiveReplicationMode = "REPLICA";
+            } else {
+                System.err.println("Argument 3 is either primary or replica, default: active replication.");
+                System.exit(1);
+            }
+        } else {
+            System.out.println("Server works in active replication mode.");
+        }
+
+        /*
+         * TODO: use passiveReplicationMode
+         * */
 
         /*Database and protocol here*/
         System.out.println("Initializing database and protocol...");
