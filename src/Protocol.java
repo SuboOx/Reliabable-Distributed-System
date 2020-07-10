@@ -133,10 +133,10 @@ public class Protocol {
         StringBuilder packedDB = new StringBuilder();
 
         for (String key : db.getAllKeys()) {
-            packedDB.append(key).append(Splitter).append(db.getVariable(key));
+            packedDB.append(Splitter).append(key).append(Splitter).append(db.getVariable(key));
         }
-
-        return primaryServerID + Splitter + backupServerID + Splitter + reqID + Splitter + packedDB;
+        //packedDB
+        return primaryServerID + Splitter + backupServerID + Splitter + reqID + packedDB;
     }
 
     public static parseResult checkpointUnpack(String line) {
@@ -153,7 +153,7 @@ public class Protocol {
         DataBase db = null;
         if (infos.length > 3) {
             db = new DataBase();
-            for (int i = 4; i < infos.length; i++) {
+            for (int i = 4; i < infos.length; i += 2) {
                 db.setVariable(infos[i - 1], infos[i]);
             }
         }
