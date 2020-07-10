@@ -108,6 +108,7 @@ public class Server {
                         String msg2send = Protocol.checkpointPack(serverID, backupServerID, -1, db);
                         if (msg2send != null) {
                             System.out.println("Sending checkpoint msg to " + backupServerID);
+                            System.out.println("Checkpoint msg : " + db.toString());
                             out.println(msg2send);
                         } else {
                             System.out.println("Illegal input, input should be var=value");
