@@ -10,8 +10,13 @@ import java.util.ArrayList;
 public class Server {
     /*Database and protocol, currently very naive*/
     private static DataBase db = new DataBase();
-    private static int serverID;
     private static ArrayList<String> logging = new ArrayList<>();
+    /*Default configurations for server and necessary variables*/
+    private static int serverID;
+    private static boolean isPassive = false;
+    private static boolean isBackup = false;
+    private static int ckptFreq = 10000;
+    private static int portNumber;
 
     /*Each client will be served by a thread in server, all of the threads shares database and protocol*/
     static class ServerThread extends Thread {
@@ -131,43 +136,45 @@ public class Server {
         }
     }
 
-    public static void main(String[] args) {
-        boolean isPassive = false;
-        boolean isBackup = false;
-        int ckpt_freq = 10000;
-        if (args.length != 2 && args.length != 3 && args.length != 4) {
-            System.err.println("Usage: java Server <Server id> <port number> (<p for primary or b for backup>) (checkpoint frequency)");
-            System.err.println("                   When no <p/b(optional)> is given, works in active replication mode.");
-            System.err.println("                   When no <checkpoint frequency> is given, default 20s.");
-            System.exit(1);
-        }
-        if (args.length > 2) {
-            isPassive = true;
-            isPassive = true;
-            if ("p".equals(args[2])) {
-                isBackup = false;
-            } else if ("b".equals(args[2])) {
-                isBackup = true;
-            } else {
-                System.err.println("Usage: java Server <Server id> <port number> (<primary ot backup>) (option: p for primary, b for back up))");
+    static class Helper {
+        static void readConsoleInput(String[] args) {
+            if (args.length != 2 && args.length != 3 && args.length != 4) {
+                System.err.println("Usage: java Server <Server id> <port number> (<p for primary or b for backup>) (checkpoint frequency)");
+                System.err.println("                   When no <p/b(optional)> is given, works in active replication mode.");
+                System.err.println("                   When no <checkpoint frequency> is given, default 20s.");
                 System.exit(1);
             }
+            if (args.length > 2) {
+                isPassive = true;
+                isPassive = true;
+
+                if ("primary".equals(args[2]) || "p".equals(args[2])) {
+                    isBackup = false;
+                } else if ("backup".equals(args[2]) || "b".equals(args[2])) {
+                    isBackup = true;
+                } else {
+                    System.err.println("Usage: java Server <Server id> <port number> (<primary ot backup>) (option: p for primary, b for back up))");
+                    System.exit(1);
+                }
+            }
+            if (args.length == 4) {
+                ckptFreq = Integer.parseInt(args[3]);
+            }
+            portNumber = Integer.parseInt(args[1]);
+            serverID = Integer.parseInt(args[0]);
         }
-        if (args.length == 4) {
-            ckpt_freq = Integer.parseInt(args[3]);
+
+        static void printStartMsg() {
+            System.out.println("<----Server " + serverID + " started on port " + portNumber + "---->");
+            System.out.println("Initializing database and protocol...");
+            System.out.println("Done.");
         }
-        int portNumber = Integer.parseInt(args[1]);
-        serverID = Integer.parseInt(args[0]);
+    }
 
-        System.out.println("<----Server " + serverID + " started on port " + portNumber + "---->");
+    public static void main(String[] args) {
 
-        /*
-         * TODO: use passiveReplicationMode
-         * */
-
-        /*Database and protocol here*/
-        System.out.println("Initializing database and protocol...");
-        System.out.println("Done.");
+        Helper.readConsoleInput(args);
+        Helper.printStartMsg();
 
         ServerSocket serverSocket = null;
         Socket clientSocket = null;
@@ -180,10 +187,12 @@ public class Server {
             System.out.println(e.getMessage());
         }
 
+        /* Launch checkpoint thread for each back up server */
         if (isPassive && !isBackup) {
             for (int i = 0; i < serverConstant.serverNumber; i++) {
                 if (i != serverID) {
-                    new CheckpointThread(i, ckpt_freq).start();
+                    // New thread for checkpoint
+                    new CheckpointThread(i, ckptFreq).start();
                 }
             }
         }
@@ -194,7 +203,7 @@ public class Server {
             } catch (IOException e) {
                 System.out.println("Error: " + e);
             }
-            // new thread for a client
+            // new thread for a client or server (when accepting checkpoint messages)
             new ServerThread(clientSocket, isBackup).start();
         }
     }
