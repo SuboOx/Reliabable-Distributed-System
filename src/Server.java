@@ -47,6 +47,12 @@ public class Server {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
+                        /* Recover from log if received recovery msg , for recovery thread only*/
+                        if (isBackup && Recover.amINewPrimary(inputLine)) {
+                            Recover.recoverFromLog();
+                            /* Thread should be terminated after recovery*/
+                            return;
+                        }
 
                         //if this server is a backup
                         if (isBackup) {
@@ -90,14 +96,13 @@ public class Server {
         }
     }
 
-
     static class CheckpointThread extends Thread {
         protected int backupServerID;
-        protected int ckpt_freq;
+        protected int ckptFreq;
 
-        public CheckpointThread(int serverID, int ckpt_freq) {
+        public CheckpointThread(int serverID, int ckptFreq) {
             this.backupServerID = serverID;
-            this.ckpt_freq = ckpt_freq;
+            this.ckptFreq = ckptFreq;
         }
 
         @Override
@@ -127,12 +132,44 @@ public class Server {
                     System.err.println("Couldn't get I/O for the connection to " + serverConstant.serverHostname[backupServerID] + " : " + serverConstant.portNumber[backupServerID]);
                 }
                 try {
-                    Thread.sleep(ckpt_freq);
+                    Thread.sleep(ckptFreq);
                 } catch (InterruptedException e) {
                     System.err.println("Interrupted!");
                     System.exit(1);
                 }
             }
+        }
+    }
+
+    static class Recover {
+        // A naive recover from log way
+        /* Call this when a msg has been received. */
+        static public void recoverFromLog() {
+            /* Recover state from logging */
+            System.out.println("Recovering from log, hold tight...");
+            // TODO: implement logging prone
+            for (String log : logging) {
+                if (Protocol.isCheckpointMsg(log))
+                    continue;
+                parseResult parsed = Protocol.serverUnpack(log);
+                db.setVariable(parsed.var, parsed.value);
+                System.out.println(db.toString());
+            }
+            /* Start thread for check pointing other servers */
+            for (int i = 0; i < serverConstant.serverNumber; i++) {
+                if (i != serverID) {
+                    // New thread for checkpoint
+                    new CheckpointThread(i, ckptFreq).start();
+                }
+            }
+            /* Set necessary variables */
+            isBackup = false;
+            /* TODO: Critical: shared variable, may need to lock
+             * TODO: Yet is read-only in other threads, should be working. */
+        }
+
+        static public boolean amINewPrimary(String line) {
+            return line.equals("YOU_ARE_PRI");
         }
     }
 
