@@ -13,10 +13,12 @@ import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
 
+
+
 public class GFD {
     /*Database of membership*/
     private static Set<Integer> membership = new HashSet<>();
-
+    private static int portNumber;
     /*Each LFD will be served by a thread in GFD, all of the threads can update membership*/
     static class GFDThread extends Thread {
         protected Socket LFDSocket;
@@ -74,14 +76,25 @@ public class GFD {
         }
     }
 
+    static class GFDHelper {
+        static void readConsoleInput(String[] args) {
+            if (args.length != 1) {
+                System.err.println("Usage: GFD <port number>, Default: 8891");
+                System.exit(1);
+            }
+          portNumber = Integer.parseInt(args[0]);
+
+        }
+        static void printStartMsg() {
+            System.out.println("<----GFD started on port " + portNumber + "---->");
+        }
+    }
+
     public static void main(final String[] args) {
 
-        if (args.length != 1) {
-            System.err.println("Usage: GFD <port number>, Default: 8891");
-            System.exit(1);
-        }
-        final int portNumber = Integer.parseInt(args[0]);
-        System.out.println("<----GFD started on port " + portNumber + "---->");
+       GFDHelper.readConsoleInput(args);
+       GFDHelper.printStartMsg();
+
 
         ServerSocket GFDSocket = null;
         Socket LFDSocket = null;
