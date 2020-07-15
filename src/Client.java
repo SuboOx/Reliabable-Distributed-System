@@ -20,7 +20,7 @@ public class Client {
     private static HashSet<Integer> validPort = new HashSet<>();
     private static int reqCount = 0;
     private static HashSet<Integer> logging = new HashSet<>();
-
+    private static int[] serverIDs;
     static class ClientThread extends Thread {
         int serverID;
         String fromUser;
@@ -31,6 +31,7 @@ public class Client {
             this.fromUser = fromUser;
             this.reqID = reqID;
         }
+
 
         @Override
         public void run() {
@@ -89,36 +90,43 @@ public class Client {
 
     }
 
+    static class clientHelper {
+        static void readConsoleInput(String[] args) {
+            if (args.length != 5) {
+                System.err.println("Usage: java Client <client id> <host name> <serverID 1> <severID 2> <serverID 3> ");
+                System.exit(1);
+            }
+
+            hostName = args[1];
+            clientID = Integer.parseInt(args[0]);
+            serverIDs = new int[serverConstant.serverNumber];
+
+            serverIDs[0] = Integer.parseInt(args[2]);
+            serverIDs[1] = Integer.parseInt(args[3]);
+            serverIDs[2] = Integer.parseInt(args[4]);
+
+        }
+
+        static void connectMsg() {
+            //check how many available server can be connected
+            for (int i = 0; i < serverConstant.serverNumber; i++) {
+                try (Socket kkSocket = new Socket(hostName, serverConstant.portNumber[serverIDs[i]]);) {
+                    validPort.add(serverConstant.portNumber[serverIDs[i]]);
+                    System.err.println("Successfully connected to " + hostName + " : " + serverConstant.portNumber[serverIDs[i]]);
+                } catch (UnknownHostException e) {
+                    System.err.println("Unknown host " + hostName);
+                } catch (IOException e) {
+                    System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + serverConstant.portNumber[serverIDs[i]]);
+                }
+            }
+            System.out.println("There are " + validPort.size() + " well-functional server");
+        }
+    }
+
 
     public static void main(String[] args) {
-        if (args.length != 5) {
-            System.err.println("Usage: java Client <client id> <host name> <serverID 1> <severID 2> <serverID 3> ");
-            System.exit(1);
-        }
-
-        hostName = args[1];
-        clientID = Integer.parseInt(args[0]);
-        int[] serverIDs = new int[serverConstant.serverNumber];
-
-        serverIDs[0] = Integer.parseInt(args[2]);
-        serverIDs[1] = Integer.parseInt(args[3]);
-        serverIDs[2] = Integer.parseInt(args[4]);
-
-
-        //check how many available server can be connected
-        for (int i = 0; i < serverConstant.serverNumber; i++) {
-            try (Socket kkSocket = new Socket(hostName, serverConstant.portNumber[serverIDs[i]]);) {
-                validPort.add(serverConstant.portNumber[serverIDs[i]]);
-                System.err.println("Successfully connected to " + hostName + " : " + serverConstant.portNumber[serverIDs[i]]);
-            } catch (UnknownHostException e) {
-                System.err.println("Unknown host " + hostName);
-            } catch (IOException e) {
-                System.err.println("Couldn't get I/O for the connection to " + hostName + " : " + serverConstant.portNumber[serverIDs[i]]);
-            }
-        }
-        System.out.println("There are " + validPort.size() + " well-functional server");
-
-
+        clientHelper.readConsoleInput(args);
+        clientHelper.connectMsg();
         //send messages to server
         while (true) {
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
