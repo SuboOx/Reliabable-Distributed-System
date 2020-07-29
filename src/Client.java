@@ -21,6 +21,7 @@ public class Client {
     private static int reqCount = 0;
     private static HashSet<Integer> logging = new HashSet<>();
     private static int[] serverIDs;
+
     static class ClientThread extends Thread {
         int serverID;
         String fromUser;
@@ -35,7 +36,6 @@ public class Client {
 
         @Override
         public void run() {
-//            Protocol protocol = new Protocol();
             String fromServer;
             try (Socket kkSocket = new Socket(hostName, serverConstant.portNumber[serverID]);
                  PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);

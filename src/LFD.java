@@ -35,12 +35,6 @@ public class LFD {
            heartbeatFreq = 2000;
            lastStatus = false;
 
-
-            //choose default or set a heartbeat frequency
-            if (args.length == 5) {
-                heartbeatFreq = Integer.parseInt(args[4]);// Start from 0
-            }
-
             //choose default or set a heartbeat frequency
             if (args.length == 5) {
                 heartbeatFreq = Integer.parseInt(args[4]);// Start from 0

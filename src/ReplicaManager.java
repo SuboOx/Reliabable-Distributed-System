@@ -6,6 +6,8 @@ public class ReplicaManager {
     public static void main(String[] args) {
         System.out.println("<--- Replica Manager Started!--->");
         System.out.println("Usage: add:replica_id:portnumber");
+
+
         while (true) {
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
             try {
