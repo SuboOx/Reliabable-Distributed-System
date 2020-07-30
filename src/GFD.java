@@ -54,10 +54,8 @@ public class GFD {
                                 + parsed.serverID);
                         if (parsed.operation.equals("add")) {
                             membership.add(parsed.serverID);
-                            new communicate2RM(RMConstant.hostName, RMConstant.portNumber).send();
                         } else if (parsed.operation.equals("delete")) {
                             membership.remove(parsed.serverID);
-                            new communicate2RM(RMConstant.hostName, RMConstant.portNumber).send();
                             // send message to rm to create new one
                         } else {
                             System.err.println("The message contains wrong operation!");
@@ -82,31 +80,41 @@ public class GFD {
         }
     }
 
-    static class communicate2RM {
+    static class communicate2RMThread extends Thread {
         int RMPortNumber;
         String hostName;
 
-        public communicate2RM(String hostName, int RMPortNumber) {
+        public communicate2RMThread(String hostName, int RMPortNumber) {
             this.RMPortNumber = RMPortNumber;
             this.hostName = hostName;
         }
 
-        public void send() {
-            try (Socket kkSocket = new Socket(hostName, RMPortNumber);
-                 PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
-                 BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
-                String msg2send = Protocol.GFDPack(new ArrayList<>(membership));
-                if (msg2send != null) {
-                    System.out.println(" Sent membership to Replica Manager: " + Arrays.toString(membership.toArray()));
-                    out.println(msg2send);
-                } else {
-                    System.err.println("Detected null msg to send");
-                    return;
+        @Override
+        public void run() {
+            while (true) {
+                try (Socket kkSocket = new Socket(hostName, RMPortNumber);
+                     PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
+                     BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
+                    String msg2send = Protocol.GFDPack(new ArrayList<>(membership));
+                    if (msg2send != null) {
+                        //System.out.println(" Sent membership to Replica Manager: " + Arrays.toString(membership.toArray()));
+                        out.println(msg2send);
+                    } else {
+                        System.err.println("Detected null msg to send");
+                        return;
+                    }
+                } catch (UnknownHostException e) {
+                    System.err.println("Don't know about host " + hostName);
+                } catch (IOException e) {
+                    System.err.println("Couldn't get I/O for the connection to RM at" + hostName);
                 }
-            } catch (UnknownHostException e) {
-                System.err.println("Don't know about host " + hostName);
-            } catch (IOException e) {
-                System.err.println("Couldn't get I/O for the connection to RM at" + hostName);
+
+
+                try {
+                    Thread.sleep(RMConstant.sendFreq);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -145,6 +153,7 @@ public class GFD {
 
         //TODO: might be wrong
 
+        new communicate2RMThread(RMConstant.hostName, RMConstant.portNumber).start();
 
         while (true) {
             try {
