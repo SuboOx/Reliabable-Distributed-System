@@ -1,17 +1,13 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.io.*;
+import java.net.*;
 import java.sql.Timestamp;
 import java.util.HashSet;
 
 public class ReplicaManager {
     static HashSet<Integer> membership = new HashSet<>();
-    // Server that once was here
+    // Server that once showed up
     static HashSet<Integer> showedUpMember = new HashSet<>();
+    static boolean isPassive = false;
 
     static class serveGFDThread extends Thread {
         protected Socket GFDSocket;
@@ -45,11 +41,15 @@ public class ReplicaManager {
 
                         if (parsed.operation.equals("add")) {
                             membership.add(parsed.serverID);
-                            if (showedUpMember.contains(parsed.serverID))
-                                sendRecoverMsg(membership.iterator().next(), parsed.serverID);
+                            if (showedUpMember.contains(parsed.serverID) && !isPassive)
+                                sendRecoverMsg(membership.iterator().next(), parsed.serverID, -2);
                             showedUpMember.add(parsed.serverID);
                         } else if (parsed.operation.equals("delete")) {
                             membership.remove(parsed.serverID);
+                            if (isPassive)
+                                sendRecoverMsg(membership.iterator().next(), -1, -3);
+                            //TODO: Designate new primary here
+                            //TODO: how to determine whether a server is a back up server
                         } else {
                             System.err.println("The message contains wrong operation!");
                             System.exit(1);
@@ -67,17 +67,21 @@ public class ReplicaManager {
         }
     }
 
-    static void sendRecoverMsg(int sendServerID, int receiveServerID) {
+    //reqId = -2 when active, -3 when passive
+    static void sendRecoverMsg(int sendServerID, int receiveServerID, int reqID) {
 
         try (Socket kkSocket = new Socket(serverConstant.serverHostname[sendServerID], serverConstant.portNumber[sendServerID]);
              PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
              BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
-            String msg2send = Protocol.RMCommandPack(sendServerID, receiveServerID, -2);
+            String msg2send = Protocol.RMCommandPack(sendServerID, receiveServerID, reqID);
             if (msg2send != null) {
-                System.out.println("Recover msg sent to " + sendServerID + "sending" + msg2send);
+                if (reqID == -2)
+                    System.out.println("Recover msg sent to " + sendServerID + "sending" + msg2send);
+                else
+                    System.out.println("Designating " + sendServerID + " as new primary server");
                 out.println(msg2send);
             } else {
-                System.out.println("Illegal input, input should be var=value");
+                System.out.println("msg is null");
                 return;
             }
 
@@ -91,6 +95,20 @@ public class ReplicaManager {
 
     public static void main(String[] args) {
         System.out.println("<--- Replica Manager Started!--->");
+
+        if (args.length > 1) {
+            System.err.println("Too many arguments!");
+            System.exit(1);
+        } else if (args.length == 1) {
+            if (args[0].equals("active") || args[0].equals("a"))
+                isPassive = false;
+            else if (args[0].equals("passive") || args[0].equals("p"))
+                isPassive = true;
+            else {
+                System.err.println("Arguments can only be [p]assive or [a]ctive");
+                System.exit(1);
+            }
+        }
 
         ServerSocket serverSocket = null;
         Socket GFDSocket = null;

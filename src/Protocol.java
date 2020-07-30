@@ -207,8 +207,8 @@ public class Protocol {
 
     public static String RMCommandPack(int sendServerID, int receiveServerID, int reqID) {
         //reqID is an indicator of checkpointing message
-        if (reqID != -2)
-            return null;
+//        if (reqID != -2 || reqID != -3)
+//            return null;
         //packedDB
         return sendServerID + Splitter + receiveServerID + Splitter + reqID;
     }
