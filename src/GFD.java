@@ -10,15 +10,19 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
 
 
 public class GFD {
     /*Database of membership*/
     private static Set<Integer> membership = new HashSet<>();
     private static int portNumber;
+
     /*Each LFD will be served by a thread in GFD, all of the threads can update membership*/
     static class GFDThread extends Thread {
         protected Socket LFDSocket;
@@ -50,8 +54,10 @@ public class GFD {
                                 + parsed.serverID);
                         if (parsed.operation.equals("add")) {
                             membership.add(parsed.serverID);
+                            new communicate2RM(RMConstant.hostName, RMConstant.portNumber).send();
                         } else if (parsed.operation.equals("delete")) {
                             membership.remove(parsed.serverID);
+                            new communicate2RM(RMConstant.hostName, RMConstant.portNumber).send();
                             // send message to rm to create new one
                         } else {
                             System.err.println("The message contains wrong operation!");
@@ -76,15 +82,45 @@ public class GFD {
         }
     }
 
+    static class communicate2RM {
+        int RMPortNumber;
+        String hostName;
+
+        public communicate2RM(String hostName, int RMPortNumber) {
+            this.RMPortNumber = RMPortNumber;
+            this.hostName = hostName;
+        }
+
+        public void send() {
+            try (Socket kkSocket = new Socket(hostName, RMPortNumber);
+                 PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
+                 BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
+                String msg2send = Protocol.GFDPack(new ArrayList<>(membership));
+                if (msg2send != null) {
+                    System.out.println(" Sent membership to Replica Manager: " + Arrays.toString(membership.toArray()));
+                    out.println(msg2send);
+                } else {
+                    System.err.println("Detected null msg to send");
+                    return;
+                }
+            } catch (UnknownHostException e) {
+                System.err.println("Don't know about host " + hostName);
+            } catch (IOException e) {
+                System.err.println("Couldn't get I/O for the connection to RM at" + hostName);
+            }
+        }
+    }
+
     static class GFDHelper {
         static void readConsoleInput(String[] args) {
             if (args.length != 1) {
                 System.err.println("Usage: GFD <port number>, Default: 8891");
                 System.exit(1);
             }
-          portNumber = Integer.parseInt(args[0]);
+            portNumber = Integer.parseInt(args[0]);
 
         }
+
         static void printStartMsg() {
             System.out.println("<----GFD started on port " + portNumber + "---->");
         }
@@ -92,8 +128,8 @@ public class GFD {
 
     public static void main(final String[] args) {
 
-       GFDHelper.readConsoleInput(args);
-       GFDHelper.printStartMsg();
+        GFDHelper.readConsoleInput(args);
+        GFDHelper.printStartMsg();
 
 
         ServerSocket GFDSocket = null;
@@ -106,6 +142,9 @@ public class GFD {
                     "Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
             System.out.println(e.getMessage());
         }
+
+        //TODO: might be wrong
+
 
         while (true) {
             try {
