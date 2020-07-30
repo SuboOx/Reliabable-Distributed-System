@@ -31,7 +31,6 @@ public class Server {
         @Override
         public void run() {
             PrintWriter out = null;
-            //TODO: Maybe send a receipt
             BufferedReader in = null;
             try {
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -44,7 +43,6 @@ public class Server {
             String inputLine;
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-//            while (true) {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
@@ -68,7 +66,7 @@ public class Server {
                             return;
                         }
 
-                        /* 2 - if this server is a backup */
+                        /* 3 - if this server is a backup */
                         if (isBackup) {
                             if (Protocol.isCheckpointMsg(inputLine)) {
                                 parseResult parsed = Protocol.checkpointUnpack(inputLine);
@@ -107,7 +105,6 @@ public class Server {
                     System.err.println("Unable to read line.");
                     return;
                 }
-//            }
 
         }
     }
@@ -214,10 +211,6 @@ public class Server {
                 }
             }
         }
-//
-//        static public boolean amINewPrimary(String line) {
-//            return line.equals("YOU_ARE_PRI");
-//        }
     }
 
     static class Helper {
@@ -296,7 +289,6 @@ public class Server {
             }
             // new thread for a client or server (when accepting checkpoint messages)
             new ServerThread(clientSocket, isBackup).start();
-//            System.out.println("new thread");
         }
     }
 }

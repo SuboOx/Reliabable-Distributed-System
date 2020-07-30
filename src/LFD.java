@@ -85,7 +85,6 @@ public class LFD {
                 }
 
             }
-            //send2GFD(nowStatus);
             lastStatus = nowStatus;
 
             Thread.sleep(heartbeatFreq);

@@ -138,8 +138,6 @@ public class Client {
                 if (fromUser.equals("exit"))
                     return;
                 for (int i = 0; i < serverConstant.serverNumber; i++) {
-//                    if (!validPort.contains(serverConstant.portNumber[serverIDs[i]]))
-//                        continue;
                     new Client.ClientThread(serverIDs[i], fromUser, reqCount).start();
                 }
             } catch (IOException e) {

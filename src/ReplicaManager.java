@@ -34,7 +34,6 @@ public class ReplicaManager {
             String inputLine;
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-            // while (true) {
             try {
                 inputLine = in.readLine();
                 if (inputLine != null) {
@@ -76,7 +75,6 @@ public class ReplicaManager {
                 System.err.println("Unable to read line.");
                 return;
             }
-            //}
         }
     }
 
