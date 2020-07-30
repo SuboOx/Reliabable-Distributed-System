@@ -23,10 +23,8 @@ public class Server {
     /*Each client will be served by a thread in server, all of the threads shares database and protocol*/
     static class ServerThread extends Thread {
         protected Socket clientSocket;
-        protected boolean isBackup;
 
         public ServerThread(Socket clientSocket, boolean isBackup) {
-            this.isBackup = isBackup;
             this.clientSocket = clientSocket;
         }
 
@@ -46,7 +44,7 @@ public class Server {
             String inputLine;
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-            while (true) {
+//            while (true) {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
@@ -66,6 +64,7 @@ public class Server {
                         if(Protocol.isNewPrimary(inputLine)){
                             Recover.becomePrimary();
                             isBackup = false;
+                            startCkptThread();
                             return;
                         }
 
@@ -108,7 +107,7 @@ public class Server {
                     System.err.println("Unable to read line.");
                     return;
                 }
-            }
+//            }
 
         }
     }
@@ -258,6 +257,17 @@ public class Server {
         }
     }
 
+    private static void startCkptThread(){
+        if (isPassive && !isBackup) {
+            for (int i = 0; i < serverConstant.serverNumber; i++) {
+                if (i != serverID) {
+                    // New thread for checkpoint
+                    new CheckpointThread(i, ckptFreq,false).start();
+                }
+            }
+        }
+    }
+
     public static void main(String[] args) {
 
         Helper.readConsoleInput(args);
@@ -275,14 +285,8 @@ public class Server {
         }
 
         /* Launch checkpoint thread for each back up server */
-        if (isPassive && !isBackup) {
-            for (int i = 0; i < serverConstant.serverNumber; i++) {
-                if (i != serverID) {
-                    // New thread for checkpoint
-                    new CheckpointThread(i, ckptFreq,false).start();
-                }
-            }
-        }
+        startCkptThread();
+
 
         while (true) {
             try {
@@ -292,6 +296,7 @@ public class Server {
             }
             // new thread for a client or server (when accepting checkpoint messages)
             new ServerThread(clientSocket, isBackup).start();
+//            System.out.println("new thread");
         }
     }
 }
