@@ -167,7 +167,6 @@ public class Protocol {
             System.err.println("Not a legal msg, isCheckpointMsg() says.");
             System.exit(1);
         }
-
         return infos[2].equals("-1");
     }
 
