@@ -171,6 +171,48 @@ public class Protocol {
         return infos[2].equals("-1");
     }
 
+    public static boolean isNewPrimary(String line) {
+        String[] infos = line.split(Splitter);
+
+        if (infos.length < 3) {
+            System.err.println("Not a legal msg, isCheckpointMsg() says.");
+            System.exit(1);
+        }
+
+        return infos[2].equals("-3");
+    }
+
+
+    public static String RMCommandPack(int sendServerID, int receiveServerID, int reqID) {
+        //reqID is an indicator of checkpointing message
+        if (reqID != -2)
+            return null;
+        //packedDB
+        return sendServerID + Splitter + receiveServerID + Splitter + reqID;
+    }
+
+    public static boolean isCommandFromRM(String line) {
+        String[] infos = line.split(Splitter);
+
+        if (infos.length != 3) {
+            System.err.println("Not a legal msg, isCommandFromRM() says.");
+            System.exit(1);
+        }
+
+        return infos[2].equals("-2");
+    }
+
+    public static int getRecoveryID(String line) {
+        String[] infos = line.split(Splitter);
+
+        if (infos.length != 3) {
+            System.err.println("Not a legal msg, isCommandFromRM() says.");
+            System.exit(1);
+        }
+
+        return Integer.parseInt(infos[1]);
+    }
+
     /**
      * @param inputLine string to check format
      * @return true when not passed check, otherwise false

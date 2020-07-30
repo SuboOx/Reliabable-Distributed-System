@@ -16,6 +16,7 @@ public class Server {
     private static int serverID;
     private static boolean isPassive = false;
     private static boolean isBackup = false;
+    private static boolean isRecovery = false;
     private static int ckptFreq = 10000;
     private static int portNumber;
 
@@ -49,14 +50,26 @@ public class Server {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
-                        /* Recover from log if received recovery msg , for recovery thread only*/
-                        if (isBackup && Recover.amINewPrimary(inputLine)) {
-                            Recover.recoverFromLog();
-                            /* Thread should be terminated after recovery*/
+                        /* Mark 1 for Active replica , Mark 2 for Passive Replica */
+                        /* 1 - if this is a recovery replica */
+                        if (isRecovery) {
+                            Recover.recoverFromLog(inputLine);
+                            return;
+                        }
+                        /* 1 - if it need to send a message to recovery replica */
+                        if (Protocol.isCommandFromRM(inputLine)) {
+                            new CheckpointThread(Protocol.getRecoveryID(inputLine), ckptFreq,true).start();
                             return;
                         }
 
-                        //if this server is a backup
+                        /* 2 - if it become new primary */
+                        if(Protocol.isNewPrimary(inputLine)){
+                            Recover.becomePrimary();
+                            isBackup = false;
+                            return;
+                        }
+
+                        /* 2 - if this server is a backup */
                         if (isBackup) {
                             if (Protocol.isCheckpointMsg(inputLine)) {
                                 parseResult parsed = Protocol.checkpointUnpack(inputLine);
@@ -71,7 +84,9 @@ public class Server {
                             return;
                         }
 
-                        //if the server is not a backup
+
+
+                        /* 1.2 - if the server is not a backup() primary or active */
                         parseResult parsed = Protocol.serverUnpack(inputLine);
                         if (parsed.serverID != serverID) {
                             System.err.println("The message have been sent to the wrong server!");
@@ -101,10 +116,12 @@ public class Server {
     static class CheckpointThread extends Thread {
         protected int backupServerID;
         protected int ckptFreq;
+        protected boolean forRecovery;
 
-        public CheckpointThread(int serverID, int ckptFreq) {
+        public CheckpointThread(int serverID, int ckptFreq, boolean forRecovery) {
             this.backupServerID = serverID;
             this.ckptFreq = ckptFreq;
+            this.forRecovery = forRecovery;
         }
 
         @Override
@@ -135,6 +152,9 @@ public class Server {
                 }
                 try {
                     Thread.sleep(ckptFreq);
+                    if(forRecovery){
+                        return;
+                    }
                 } catch (InterruptedException e) {
                     System.err.println("Interrupted!");
                     System.exit(1);
@@ -146,33 +166,59 @@ public class Server {
     static class Recover {
         // A naive recover from log way
         /* Call this when a msg has been received. */
-        static public void recoverFromLog() {
+        static public void recoverFromLog(String inputLine) {
             /* Recover state from logging */
             System.out.println("Recovering from log, hold tight...");
             // TODO: implement logging prone
-            for (String log : logging) {
-                if (Protocol.isCheckpointMsg(log))
-                    continue;
-                parseResult parsed = Protocol.serverUnpack(log);
-                db.setVariable(parsed.var, parsed.value);
-                System.out.println(db.toString());
-            }
-            /* Start thread for check pointing other servers */
-            for (int i = 0; i < serverConstant.serverNumber; i++) {
-                if (i != serverID) {
-                    // New thread for checkpoint
-                    new CheckpointThread(i, ckptFreq).start();
+
+
+            /* if receive a ckpt message, process it */
+            /* else return and wait ofr tthe ckpt message */
+            synchronized (db) {
+                if (Protocol.isCheckpointMsg(inputLine)) {
+                    parseResult parsed = Protocol.checkpointUnpack(inputLine);
+                    db.update(parsed.db);
+                    System.out.println("Received checkpoint msg from server " + parsed.serverID);
+                    //print database
+                    System.out.println("Current database:");
+                    System.out.println(db.toString());
+                } else {
+                    logging.add(inputLine);
+                    return;
                 }
             }
-            /* Set necessary variables */
-            isBackup = false;
-            /* TODO: Critical: shared variable, may need to lock
-             * TODO: Yet is read-only in other threads, should be working. */
+
+            /* process the message in the new logging */
+            synchronized (db) {
+                for (String log : logging) {
+                    parseResult parsed = Protocol.serverUnpack(log);
+                    db.setVariable(parsed.var, parsed.value);
+                    System.out.println(db.toString());
+                }
+            }
+            isRecovery = false;
+            return;
+
         }
 
-        static public boolean amINewPrimary(String line) {
-            return line.equals("YOU_ARE_PRI");
+        static public void becomePrimary() {
+            /* Recover state from logging */
+            System.out.println("Recovering from log, hold tight...");
+            // TODO: implement logging prone
+
+            /* process the message in the new logging */
+            synchronized (db) {
+                for (String log : logging) {
+                    parseResult parsed = Protocol.serverUnpack(log);
+                    db.setVariable(parsed.var, parsed.value);
+                    System.out.println(db.toString());
+                }
+            }
         }
+//
+//        static public boolean amINewPrimary(String line) {
+//            return line.equals("YOU_ARE_PRI");
+//        }
     }
 
     static class Helper {
@@ -191,6 +237,8 @@ public class Server {
                     isBackup = false;
                 } else if ("backup".equals(args[2]) || "b".equals(args[2])) {
                     isBackup = true;
+                } else if ("recovery".equals(args[2]) || "r".equals(args[2])){
+                    isRecovery = true;
                 } else {
                     System.err.println("Usage: java Server <Server id> <port number> (<primary ot backup>) (option: p for primary, b for back up))");
                     System.exit(1);
@@ -231,7 +279,7 @@ public class Server {
             for (int i = 0; i < serverConstant.serverNumber; i++) {
                 if (i != serverID) {
                     // New thread for checkpoint
-                    new CheckpointThread(i, ckptFreq).start();
+                    new CheckpointThread(i, ckptFreq,false).start();
                 }
             }
         }
