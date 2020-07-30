@@ -4,11 +4,14 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.util.HashSet;
 
 public class ReplicaManager {
-    HashSet<Integer> membership = new HashSet<>();
+    static HashSet<Integer> membership = new HashSet<>();
+    // Server that once was here
+    static HashSet<Integer> showedUpMember = new HashSet<>();
 
     static class serveGFDThread extends Thread {
         protected Socket GFDSocket;
@@ -36,9 +39,22 @@ public class ReplicaManager {
                 try {
                     inputLine = in.readLine();
                     if (inputLine != null) {
-                        //if the server is not a backup
-                        HashSet<Integer> newSet = Protocol.RMUnpack(inputLine);
-                        System.out.println("[" + timestamp.toString() + "]" + " Received msg from GFD: " + newSet.toString());
+                        final parseResult parsed = Protocol.RMUnpack(inputLine);
+                        System.out.println("Received msg from GFD :" + parsed.operation + " "
+                                + parsed.serverID);
+
+                        if (parsed.operation.equals("add")) {
+                            membership.add(parsed.serverID);
+                            if (showedUpMember.contains(parsed.serverID))
+                                sendRecoverMsg(membership.iterator().next(), parsed.serverID);
+                            showedUpMember.add(parsed.serverID);
+                        } else if (parsed.operation.equals("delete")) {
+                            membership.remove(parsed.serverID);
+                        } else {
+                            System.err.println("The message contains wrong operation!");
+                            System.exit(1);
+                        }
+
                     } else {
                         GFDSocket.close();
                         return;
@@ -48,6 +64,28 @@ public class ReplicaManager {
                     return;
                 }
             }
+        }
+    }
+
+    static void sendRecoverMsg(int sendServerID, int receiveServerID) {
+
+        try (Socket kkSocket = new Socket(serverConstant.serverHostname[sendServerID], serverConstant.portNumber[sendServerID]);
+             PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
+            String msg2send = Protocol.RMCommandPack(sendServerID, receiveServerID, -2);
+            if (msg2send != null) {
+                System.out.println("Recover msg sent to " + sendServerID + "sending" + msg2send);
+                out.println(msg2send);
+            } else {
+                System.out.println("Illegal input, input should be var=value");
+                return;
+            }
+
+        } catch (UnknownHostException e) {
+            System.err.println("Don't know about host " + serverConstant.serverHostname[sendServerID]);
+
+        } catch (IOException e) {
+            System.err.println("Couldn't get I/O for the connection to " + serverConstant.serverHostname[sendServerID] + " : " + serverConstant.portNumber[sendServerID]);
         }
     }
 
@@ -66,6 +104,7 @@ public class ReplicaManager {
         }
 
         while (true) {
+            //Serve GFD
             try {
                 GFDSocket = serverSocket.accept();
             } catch (IOException e) {

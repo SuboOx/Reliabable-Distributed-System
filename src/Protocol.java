@@ -106,15 +106,9 @@ public class Protocol {
         return LFDId + Splitter + operation + Splitter + serverID;
     }
 
-    public static String GFDPack(ArrayList<Integer> membership) {
-        StringBuilder sb = new StringBuilder();
+    public static String GFDPack(String operation, int serverID) {
 
-        for (int num : membership) {
-            sb.append(Splitter);
-            sb.append(num);
-        }
-
-        return sb.toString();
+        return operation + Splitter + serverID;
     }
 
     /**
@@ -197,17 +191,18 @@ public class Protocol {
         return infos[2].equals("-3");
     }
 
-    public static HashSet<Integer> RMUnpack(String line) {
+    public static parseResult RMUnpack(String line) {
         String[] infos = line.split(Splitter);
-        HashSet<Integer> set = new HashSet<>();
 
-        for (String num : infos) {
-            if (num.equals(""))
-                continue;
-            set.add(Integer.parseInt(num));
+        if (infos.length != 2) {
+            System.err.println("Invalid protocol message!");
+            System.exit(1);
         }
 
-        return set;
+        String operation = infos[0];
+        String serverId = infos[1];
+
+        return new parseResult("-1", operation, serverId);
     }
 
     public static String RMCommandPack(int sendServerID, int receiveServerID, int reqID) {

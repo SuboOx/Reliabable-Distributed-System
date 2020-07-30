@@ -231,7 +231,6 @@ public class Server {
             }
             if (args.length > 2) {
                 isPassive = true;
-                isPassive = true;
 
                 if ("primary".equals(args[2]) || "p".equals(args[2])) {
                     isBackup = false;
@@ -239,6 +238,7 @@ public class Server {
                     isBackup = true;
                 } else if ("recovery".equals(args[2]) || "r".equals(args[2])){
                     isRecovery = true;
+                    isPassive = false;
                 } else {
                     System.err.println("Usage: java Server <Server id> <port number> (<primary ot backup>) (option: p for primary, b for back up))");
                     System.exit(1);
