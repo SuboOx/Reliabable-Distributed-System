@@ -8,6 +8,11 @@
 
 //import java.util.concurrent.atomic.AtomicLong;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+
 public class Protocol {
     final private static String Splitter = "#";
 
@@ -101,6 +106,17 @@ public class Protocol {
         return LFDId + Splitter + operation + Splitter + serverID;
     }
 
+    public static String GFDPack(ArrayList<Integer> membership) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int num : membership) {
+            sb.append(Splitter);
+            sb.append(num);
+        }
+
+        return sb.toString();
+    }
+
     /**
      * Global Fault Detector Unpack.
      *
@@ -181,6 +197,18 @@ public class Protocol {
         return infos[2].equals("-3");
     }
 
+    public static HashSet<Integer> RMUnpack(String line) {
+        String[] infos = line.split(Splitter);
+        HashSet<Integer> set = new HashSet<>();
+
+        for (String num : infos) {
+            if (num.equals(""))
+                continue;
+            set.add(Integer.parseInt(num));
+        }
+
+        return set;
+    }
 
     public static String RMCommandPack(int sendServerID, int receiveServerID, int reqID) {
         //reqID is an indicator of checkpointing message
@@ -192,11 +220,6 @@ public class Protocol {
 
     public static boolean isCommandFromRM(String line) {
         String[] infos = line.split(Splitter);
-
-        if (infos.length != 3) {
-            System.err.println("Not a legal msg, isCommandFromRM() says.");
-            System.exit(1);
-        }
 
         return infos[2].equals("-2");
     }
