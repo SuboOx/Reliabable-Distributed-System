@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 
 public class Server {
@@ -42,6 +43,7 @@ public class Server {
             }
 
             String inputLine;
+            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
             while (true) {
                 try {
@@ -75,7 +77,7 @@ public class Server {
                             System.err.println("The message have been sent to the wrong server!");
                             System.exit(1);
                         }
-                        System.out.println("Received msg from client " + parsed.clientID + ":" + inputLine);
+                        System.out.println("[" + timestamp.toString() + "]" + " Received msg from client " + parsed.clientID + ":" + inputLine);
                         System.out.println("Unpacked msg: " + parsed.var + "=" + parsed.value + ", id: " + parsed.clientID + ":req" + parsed.reqID);
                         db.setVariable(parsed.var, parsed.value);
                         String respond = Protocol.serverPack(db.toString(), parsed.clientID, parsed.serverID, parsed.reqID);

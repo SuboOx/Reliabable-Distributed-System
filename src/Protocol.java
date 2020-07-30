@@ -205,7 +205,6 @@ final class parseResult {
     }
 
     //ParseResult for client unpack
-    //ParseResult for client unpack
     parseResult(String clientId, String serverId, String reqId, String var) {
         this.clientID = Integer.parseInt(clientId);
         this.serverID = Integer.parseInt(serverId);

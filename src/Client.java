@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.sql.Timestamp;
 import java.util.HashSet;
 
 
@@ -37,12 +38,14 @@ public class Client {
         @Override
         public void run() {
             String fromServer;
+            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
             try (Socket kkSocket = new Socket(hostName, serverConstant.portNumber[serverID]);
                  PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
                  BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
                 String msg2send = Protocol.clientPack(fromUser, clientID, serverID, reqID);
                 if (msg2send != null) {
-                    System.out.println("Sending msg " + reqID + " to " + serverID + " : " + fromUser);
+                    System.out.println("[" + timestamp.toString() + "]" + " Sent message" + reqID + "to" + serverID + " : " + fromUser);
                     out.println(msg2send);
                 } else {
                     System.out.println("Illegal input, input should be var=value");
@@ -60,7 +63,7 @@ public class Client {
                             System.out.println("msg_num " + parsed.reqID + " : Duplicate response received from replica S" + parsed.serverID);
                         } else {
                             logging.add(parsed.reqID);
-                            System.out.println("Received message " + parsed.reqID + " from server " + parsed.serverID + " : " + parsed.var);
+                            System.out.println("[" + timestamp.toString() + "]" + " Received message " + parsed.reqID + " from server " + parsed.serverID + " : " + parsed.var);
                         }
                     }
                 }
