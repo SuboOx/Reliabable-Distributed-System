@@ -2,9 +2,10 @@ import java.io.*;
 import java.net.*;
 import java.sql.Timestamp;
 import java.util.HashSet;
+import java.util.TreeSet;
 
 public class ReplicaManager {
-    static HashSet<Integer> membership = new HashSet<>();
+    static TreeSet<Integer> membership = new TreeSet<>();
     // Server that once showed up
     static HashSet<Integer> showedUpMember = new HashSet<>();
     static boolean isPassive = false;
@@ -33,48 +34,49 @@ public class ReplicaManager {
             String inputLine;
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-            while (true) {
-                try {
-                    inputLine = in.readLine();
-                    if (inputLine != null) {
-                        final parseResult parsed = Protocol.RMUnpack(inputLine);
-                        System.out.println("Received msg from GFD :" + parsed.operation + " "
-                                + parsed.serverID);
+            // while (true) {
+            try {
+                inputLine = in.readLine();
+                if (inputLine != null) {
+                    final parseResult parsed = Protocol.RMUnpack(inputLine);
+                    System.out.println("Received msg from GFD :" + parsed.operation + " "
+                            + parsed.serverID);
 
-                        if (parsed.operation.equals("add")) {
-                            membership.add(parsed.serverID);
-                            // Set primary server
-                            if (isPassive && primaryServerID == -1) {
-                                primaryServerID = parsed.serverID;
-                                System.out.println("Server" + primaryServerID + "is the primary server.");
-                            }
+                    if (parsed.operation.equals("add")) {
+                        // Set primary server [Passive]
+                        if (isPassive && primaryServerID == -1) {
+                            primaryServerID = parsed.serverID;
+                            System.out.println("Server" + primaryServerID + "is the primary server.");
+                        }
+                        // Recover new server [Active]
+                        if (showedUpMember.contains(parsed.serverID) && !isPassive)
+                            sendRecoverMsg(membership.last(), parsed.serverID, -2);
 
-
-                            if (showedUpMember.contains(parsed.serverID) && !isPassive)
-                                sendRecoverMsg(membership.iterator().next(), parsed.serverID, -2);
-                            showedUpMember.add(parsed.serverID);
-                        } else if (parsed.operation.equals("delete")) {
-                            membership.remove(parsed.serverID);
-                            if (isPassive && parsed.serverID == primaryServerID) {
-                                int newPrimaryServerID = membership.iterator().next();
-                                sendRecoverMsg(newPrimaryServerID, -1, -3);
-                                primaryServerID = newPrimaryServerID;
-                            }
-
-                        } else {
-                            System.err.println("The message contains wrong operation!");
-                            System.exit(1);
+                        membership.add(parsed.serverID);
+                        showedUpMember.add(parsed.serverID);
+                    } else if (parsed.operation.equals("delete")) {
+                        membership.remove(parsed.serverID);
+                        if (isPassive && parsed.serverID == primaryServerID) {
+                            int newPrimaryServerID = membership.iterator().next();
+                            sendRecoverMsg(newPrimaryServerID, -1, -3);
+                            primaryServerID = newPrimaryServerID;
                         }
 
                     } else {
-                        GFDSocket.close();
-                        return;
+                        System.err.println("The message contains wrong operation!");
+                        System.exit(1);
                     }
-                } catch (IOException e) {
-                    System.err.println("Unable to read line.");
+                    System.out.println(membership.toString());
+
+                } else {
+                    GFDSocket.close();
                     return;
                 }
+            } catch (IOException e) {
+                System.err.println("Unable to read line.");
+                return;
             }
+            //}
         }
     }
 
@@ -86,8 +88,9 @@ public class ReplicaManager {
              BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
             String msg2send = Protocol.RMCommandPack(sendServerID, receiveServerID, reqID);
             if (msg2send != null) {
+                System.out.println("ServerID: " + sendServerID);
                 if (reqID == -2)
-                    System.out.println("Recover msg sent to " + sendServerID + "sending" + msg2send);
+                    System.out.println("Recover msg sent to " + sendServerID + " RAW: " + msg2send);
                 else
                     System.out.println("Designating " + sendServerID + " as new primary server");
                 out.println(msg2send);
@@ -143,40 +146,5 @@ public class ReplicaManager {
             new ReplicaManager.serveGFDThread(GFDSocket).start();
         }
 
-//        while (true) {
-//            BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-//            try {
-//                String commandLine = stdIn.readLine();
-//                String[] ss;
-//                if (commandLine.equals("exit"))
-//                    break;
-//
-//                if (!commandLine.contains(":")) {
-//                    System.out.println("Illegal input, input should be add:id:portnumber");
-//                    continue;
-//                }
-//
-//                ss = commandLine.split(":");
-//                if (ss.length != 3) {
-//                    System.out.println("Illegal input, input should be add:id:portnumber");
-//                    continue;
-//                }
-//                if (ss[0].equals("add")) {
-//                    try {
-//                        Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start java Server " + Integer.parseInt(ss[1]) + " " + Integer.parseInt(ss[2])});
-//                        System.out.println("Server" + Integer.parseInt(ss[1]) + "launched");
-//                    } catch (Exception e) {
-//                        System.out.println("Can't launch Server");
-//                    }
-//                }
-//            } catch (IOException e) {
-//                System.err.println("Unable to create buffer");
-//                return;
-//            }
-//
-//        }
-        // Exit
-        //System.out.println("Bye!");
     }
-
 }
