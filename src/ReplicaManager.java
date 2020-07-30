@@ -8,6 +8,8 @@ public class ReplicaManager {
     // Server that once showed up
     static HashSet<Integer> showedUpMember = new HashSet<>();
     static boolean isPassive = false;
+    // primary server will be the first server connected to replica manager
+    static int primaryServerID = -1;
 
     static class serveGFDThread extends Thread {
         protected Socket GFDSocket;
@@ -41,15 +43,24 @@ public class ReplicaManager {
 
                         if (parsed.operation.equals("add")) {
                             membership.add(parsed.serverID);
+                            // Set primary server
+                            if (isPassive && primaryServerID == -1) {
+                                primaryServerID = parsed.serverID;
+                                System.out.println("Server" + primaryServerID + "is the primary server.");
+                            }
+
+
                             if (showedUpMember.contains(parsed.serverID) && !isPassive)
                                 sendRecoverMsg(membership.iterator().next(), parsed.serverID, -2);
                             showedUpMember.add(parsed.serverID);
                         } else if (parsed.operation.equals("delete")) {
                             membership.remove(parsed.serverID);
-                            if (isPassive)
-                                sendRecoverMsg(membership.iterator().next(), -1, -3);
-                            //TODO: Designate new primary here
-                            //TODO: how to determine whether a server is a back up server
+                            if (isPassive && parsed.serverID == primaryServerID) {
+                                int newPrimaryServerID = membership.iterator().next();
+                                sendRecoverMsg(newPrimaryServerID, -1, -3);
+                                primaryServerID = newPrimaryServerID;
+                            }
+
                         } else {
                             System.err.println("The message contains wrong operation!");
                             System.exit(1);
