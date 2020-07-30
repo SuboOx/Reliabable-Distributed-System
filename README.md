@@ -55,12 +55,65 @@ The GFD will maintain a database (currently the a hash set) about the availabili
 
 ## Active Replication
 
-TBC
+### Server
+
+Client connect to all the server, server update when receive client.
+
+### Recovery
+
+new server online ---> LFD detect ---> GFD receive membership ---> RM receive ---> RM add to mem ---> RM send msg to one server to send chkpmsg --> recovery server recover
 
 ### Duplicate Detection
 
+Client receive; 
+
 TBC
+
+## RM
+
+functions
+
+maintain/update membership
+desinating new primary in passive mode
+updating newly added server in active mode (ask one server to send chkpt msg to new server)
 
 ## Passive Replication
 
-TBC
+### Server/ Checkpt
+
+
+### Duplicate Detection
+
+Same to active. Client receive; 
+
+### When primary server down
+
+primary down --> LFD --> GFD --> RM --> desginate new primary --> backup server -> new primary
+
+### Recovery
+
+new server (back up server) --> will be updated when received chkpoint msg
+
+## Usage
+
+TODO: how to launch each program
+
+### Server
+
+`java Server <Server id> <port number> (<primary or backup or recover>) (option: p for primary, b for back up))`
+
+i.e.
+
+`java Server 0 8888 p` stands for launching server 0 in passive mode as primary listening port 8888.
+
+`java Server 0 8888` stands for launching server 0 in active mode listening port 8888.
+
+`java Server 0 8888 r` stands for launching server 0 as recovery in active mode listening port 8888. (In passive mode, launch a backup server 0 directly).
+
+### LFD
+
+### GFD
+
+### Replica Manager
+
+### Client
