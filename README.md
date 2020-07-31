@@ -57,46 +57,63 @@ The GFD will maintain a database (currently the a hash set) about the availabili
 
 ### Server
 
-Client connect to all the server, server update when receive client.
+Clients connect to all the servers, server updates when receive messages from clients.
+
+### When server down
+
+When server is down, the LFD will detect it by heart beating and report it to GFD to delete the membership. Also, GFD will send a message to replica manager.
 
 ### Recovery
 
-new server online ---> LFD detect ---> GFD receive membership ---> RM receive ---> RM add to mem ---> RM send msg to one server to send chkpmsg --> recovery server recover
+When new server is back, LFD will detect it by heartbeats and report it to GFD to update membership. Replica manager will also receive the update of the new server from GFD.
+
+Then, replica manager will send a message to one of severs to send the checkpointing to the new sever to finish recovery.
 
 ### Duplicate Detection
 
-Client receive; 
+We have a way of ensuring that replicas do not perform duplicate operations multiple times.
 
-TBC
+When clients receive messages from servers, we will check request ID in replies to deduplicate the messages from servers.
+
+
 
 ## RM
+The replica manager is a subsystem that is responsible for managing the synchronization of replicas. The replica manager is responsible for the following:
 
-functions
+Maintaining and updating memberships
 
-maintain/update membership
-desinating new primary in passive mode
-updating newly added server in active mode (ask one server to send chkpt msg to new server)
+Designating new primary in passive mode
+
+Updating the newly added server in active replication by asking one server to send checkpointing message to the new server.
 
 ## Passive Replication
 
-### Server/ Checkpt
+### Server
 
+Clients connect to all the servers, server updates when receive messages from clients.
+
+Also, primary server sends checkpointing messages to back up servers at certain frequency.
 
 ### Duplicate Detection
 
-Same to active. Client receive; 
+Same to active replication in order to avoid duplicate operations multiple times. 
 
 ### When primary server down
 
-primary down --> LFD --> GFD --> RM --> desginate new primary --> backup server -> new primary
+When primary server is down, the LFD will detect it by heart beating and report it to GFD to delete the membership. Also, GFD will send a message to replica manager.
+
+Replica manager will designate a new primary replica chosen from backup servers.
+
 
 ### Recovery
 
-new server (back up server) --> will be updated when received chkpoint msg
+When new server(backup server) is back, LFD will detect it by heartbeats and report it to GFD to update membership. Replica manager will also receive the update of the new server from GFD.
+
+The new backup server will be updated when receiving the checkpointing message.
 
 ## Usage
 
-TODO: how to launch each program
+How to launch each program
 
 ### Server
 
@@ -104,16 +121,49 @@ TODO: how to launch each program
 
 i.e.
 
-`java Server 0 8888 p` stands for launching server 0 in passive mode as primary listening port 8888.
+`java Server 0 8888 p` stands for launching server 0 in passive replication mode as primary listening port 8888.
 
-`java Server 0 8888` stands for launching server 0 in active mode listening port 8888.
+`java Server 0 8888` stands for launching server 0 in active replication  mode listening port 8888.
 
-`java Server 0 8888 r` stands for launching server 0 as recovery in active mode listening port 8888. (In passive mode, launch a backup server 0 directly).
+`java Server 0 8888 r` stands for launching server 0 as recovery in active replication  mode listening port 8888. (In passive replication  mode, launch a backup server 0 directly).
 
 ### LFD
 
+`java LFD <LFD id> <host name> <serverID> <time out> (<heartbeat freq>)`
+
+
+
+`java LFD 0 127.0.0.1 0 2000 1000`  stands for launching LFD 0 for heartbeating server 0 with the hostname 127.0.0.1.
+
+The time for time out is 2000ms and heartbeat frequency is 1000.(The default heartbeat freq is 2000, which is optional.)
+
 ### GFD
+
+`java GFD <port number>(Default: 8891)`
+ 
+i.e.
+
+`java GFD 8891`stands for launching GFD as listening port 8891.
+
 
 ### Replica Manager
 
+`java ReplicaManager passive/active`
+
+i.e.
+
+`java ReplicaManager passive`stands for launching replica manager in passive replication mode.
+
+`java ReplicaManager active`stands for launching replica manager in active replication mode.
+
 ### Client
+
+`java Client <client id> <host name> <serverID 1> <severID 2> <serverID 3> `
+
+i.e.
+
+`java Client 0 127.0.0.1 0 1 2` stands for launching client 0 with the hostname 127.0.0.1 and connect to server 0, server 1 and server 2.
+
+
+
+
