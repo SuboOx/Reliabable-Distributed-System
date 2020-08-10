@@ -78,6 +78,27 @@ public class ReplicaManager {
         }
     }
 
+    static class fetchInput extends Thread {
+        @Override
+        public void run() {
+            BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+            while (true) {
+                try {
+                    String fromUser = stdIn.readLine();
+                    if (fromUser.equals("exit"))
+                        return;
+                    else if (fromUser.equals("switch")) {
+                        System.out.println("Switching to " + (isPassive == true ? "Active Mode" : "Passive Mode"));
+                        isPassive = !isPassive;
+                    }
+                } catch (IOException e) {
+                    System.err.println("Can't read from the shell");
+                    System.exit(1);
+                }
+            }
+        }
+    }
+
     //reqId = -2 when active, -3 when passive
     static void sendRecoverMsg(int sendServerID, int receiveServerID, int reqID) {
 
@@ -133,6 +154,8 @@ public class ReplicaManager {
             System.out.println(e.getMessage());
         }
 
+        new fetchInput().start();
+
         while (true) {
             //Serve GFD
             try {
@@ -140,7 +163,6 @@ public class ReplicaManager {
             } catch (IOException e) {
                 System.out.println("Error: " + e);
             }
-            // new thread for a client or server (when accepting checkpoint messages)
             new ReplicaManager.serveGFDThread(GFDSocket).start();
         }
 
