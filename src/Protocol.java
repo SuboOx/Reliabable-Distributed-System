@@ -202,6 +202,17 @@ public class Protocol {
         return infos[2].equals("-4");
     }
 
+    public static boolean switch2Active(String line) {
+        String[] infos = line.split(Splitter);
+
+        if (infos.length < 3) {
+            System.err.println("Not a legal msg, switch2Passive() says.");
+            System.exit(1);
+        }
+
+        return infos[2].equals("-5");
+    }
+
     public static parseResult RMUnpack(String line) {
         String[] infos = line.split(Splitter);
 

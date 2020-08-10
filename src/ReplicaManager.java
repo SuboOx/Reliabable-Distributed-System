@@ -90,6 +90,15 @@ public class ReplicaManager {
                     else if (fromUser.equals("switch")) {
                         System.out.println("Switching to " + (isPassive == true ? "Active Mode" : "Passive Mode"));
                         if (isPassive) {
+                            // Asking primary server to sync its status
+                            for (int serverId : membership) {
+                                if (serverId == primaryServerID)
+                                    continue;
+                                sendRecoverMsg(primaryServerID, serverId, -2);
+                            }
+                            // send msg to switch to active mode
+                            for (int serverId : membership)
+                                sendRecoverMsg(serverId, -1, -5);
 
                         } else {
                             // made all the server switch from active to passive
@@ -110,7 +119,8 @@ public class ReplicaManager {
     }
 
     //reqId = -2 when active, -3 when passive
-    //reqId = -4 when switching
+    //reqId = -4 when switching to passive
+    //reqId = -5 when switching to active
     static void sendRecoverMsg(int sendServerID, int receiveServerID, int reqID) {
 
         try (Socket kkSocket = new Socket(serverConstant.serverHostname[sendServerID], serverConstant.portNumber[sendServerID]);
@@ -118,7 +128,6 @@ public class ReplicaManager {
              BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
             String msg2send = Protocol.RMCommandPack(sendServerID, receiveServerID, reqID);
             if (msg2send != null) {
-                System.out.println("ServerID: " + sendServerID);
                 if (reqID == -2)
                     System.out.println("Recover msg sent to " + sendServerID + " RAW: " + msg2send);
                 else if (reqID == -3)

@@ -79,6 +79,14 @@ public class Server {
                         return;
                     }
 
+                    /* 4 - if switch to active*/
+                    if (Protocol.switch2Active(inputLine)) {
+                        isPassive = false;
+                        isBackup = false;
+                        System.out.println("Switching to active mode. Using default checkpoint freq");
+                        return;
+                    }
+
                     /* 4 - if this server is a backup */
                     if (isBackup) {
                         if (Protocol.isCheckpointMsg(inputLine)) {
@@ -137,6 +145,8 @@ public class Server {
         public void run() {
             while (true) {
                 String checkpoint;
+                if (isPassive == false)
+                    return;
                 try (Socket kkSocket = new Socket(serverConstant.serverHostname[backupServerID], serverConstant.portNumber[backupServerID]);
                      PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
                      BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));) {
