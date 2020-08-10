@@ -191,6 +191,17 @@ public class Protocol {
         return infos[2].equals("-3");
     }
 
+    public static boolean switch2Passive(String line) {
+        String[] infos = line.split(Splitter);
+
+        if (infos.length < 3) {
+            System.err.println("Not a legal msg, switch2Passive() says.");
+            System.exit(1);
+        }
+
+        return infos[2].equals("-4");
+    }
+
     public static parseResult RMUnpack(String line) {
         String[] infos = line.split(Splitter);
 
@@ -207,7 +218,7 @@ public class Protocol {
 
     public static String RMCommandPack(int sendServerID, int receiveServerID, int reqID) {
         //reqID is an indicator of checkpointing message
-        
+
         //packedDB
         return sendServerID + Splitter + receiveServerID + Splitter + reqID;
     }

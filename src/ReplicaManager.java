@@ -89,6 +89,16 @@ public class ReplicaManager {
                         return;
                     else if (fromUser.equals("switch")) {
                         System.out.println("Switching to " + (isPassive == true ? "Active Mode" : "Passive Mode"));
+                        if (isPassive) {
+
+                        } else {
+                            // made all the server switch from active to passive
+                            for (int serverId : membership)
+                                sendRecoverMsg(serverId, -1, -4);
+                            int newPrimaryServerID = membership.iterator().next();
+                            // designate new primary
+                            sendRecoverMsg(newPrimaryServerID, -1, -3);
+                        }
                         isPassive = !isPassive;
                     }
                 } catch (IOException e) {
@@ -111,7 +121,7 @@ public class ReplicaManager {
                 System.out.println("ServerID: " + sendServerID);
                 if (reqID == -2)
                     System.out.println("Recover msg sent to " + sendServerID + " RAW: " + msg2send);
-                else
+                else if (reqID == -3)
                     System.out.println("Designating " + sendServerID + " as new primary server");
                 out.println(msg2send);
             } else {

@@ -67,10 +67,19 @@ public class Server {
                         Recover.becomePrimary();
                         isBackup = false;
                         startCkptThread();
+                        System.out.println("I am the new primary.");
                         return;
                     }
 
-                    /* 3 - if this server is a backup */
+                    /* 3 - if switch to passive*/
+                    if (Protocol.switch2Passive(inputLine)) {
+                        isPassive = true;
+                        isBackup = true;
+                        System.out.println("Switching to passive mode. Using default checkpoint freq");
+                        return;
+                    }
+
+                    /* 4 - if this server is a backup */
                     if (isBackup) {
                         if (Protocol.isCheckpointMsg(inputLine)) {
                             parseResult parsed = Protocol.checkpointUnpack(inputLine);
