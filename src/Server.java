@@ -7,6 +7,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Server {
     /*Database and protocol, currently very naive*/
@@ -43,68 +46,68 @@ public class Server {
             String inputLine;
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-                try {
-                    inputLine = in.readLine();
-                    if (inputLine != null) {
-                        /* Mark 1 for Active replica , Mark 2 for Passive Replica */
-                        /* 1 - if this is a recovery replica */
-                        if (isRecovery) {
-                            Recover.recoverFromLog(inputLine);
-                            return;
-                        }
-                        /* 1 - if it need to send a message to recovery replica */
-                        if (Protocol.isCommandFromRM(inputLine)) {
-                            new CheckpointThread(Protocol.getRecoveryID(inputLine), ckptFreq,true).start();
-                            return;
-                        }
-
-                        /* 2 - if it become new primary */
-                        if(Protocol.isNewPrimary(inputLine)){
-                            Recover.becomePrimary();
-                            isBackup = false;
-                            startCkptThread();
-                            return;
-                        }
-
-                        /* 3 - if this server is a backup */
-                        if (isBackup) {
-                            if (Protocol.isCheckpointMsg(inputLine)) {
-                                parseResult parsed = Protocol.checkpointUnpack(inputLine);
-                                db.update(parsed.db);
-                                System.out.println("Received checkpoint msg from server " + parsed.serverID);
-                                //print database
-                                System.out.println("Current database:");
-                                System.out.println(db.toString());
-                            } else {
-                                logging.add(inputLine);
-                            }
-                            return;
-                        }
-
-
-
-                        /* 1.2 - if the server is not a backup() primary or active */
-                        parseResult parsed = Protocol.serverUnpack(inputLine);
-                        if (parsed.serverID != serverID) {
-                            System.err.println("The message have been sent to the wrong server!");
-                            System.exit(1);
-                        }
-                        System.out.println("[" + timestamp.toString() + "]" + " Received msg from client " + parsed.clientID + ":" + inputLine);
-                        System.out.println("Unpacked msg: " + parsed.var + "=" + parsed.value + ", id: " + parsed.clientID + ":req" + parsed.reqID);
-                        db.setVariable(parsed.var, parsed.value);
-                        String respond = Protocol.serverPack(db.toString(), parsed.clientID, parsed.serverID, parsed.reqID);
-                        out.println(respond);
-                        //print database
-                        System.out.println("Current database:");
-                        System.out.println(db.toString());
-                    } else {
-                        clientSocket.close();
+            try {
+                inputLine = in.readLine();
+                if (inputLine != null) {
+                    /* Mark 1 for Active replica , Mark 2 for Passive Replica */
+                    /* 1 - if this is a recovery replica */
+                    if (isRecovery) {
+                        Recover.recoverFromLog(inputLine);
                         return;
                     }
-                } catch (IOException e) {
-                    System.err.println("Unable to read line.");
+                    /* 1 - if it need to send a message to recovery replica */
+                    if (Protocol.isCommandFromRM(inputLine)) {
+                        new CheckpointThread(Protocol.getRecoveryID(inputLine), ckptFreq, true).start();
+                        return;
+                    }
+
+                    /* 2 - if it become new primary */
+                    if (Protocol.isNewPrimary(inputLine)) {
+                        Recover.becomePrimary();
+                        isBackup = false;
+                        startCkptThread();
+                        return;
+                    }
+
+                    /* 3 - if this server is a backup */
+                    if (isBackup) {
+                        if (Protocol.isCheckpointMsg(inputLine)) {
+                            parseResult parsed = Protocol.checkpointUnpack(inputLine);
+                            db.update(parsed.db);
+                            System.out.println("Received checkpoint msg from server " + parsed.serverID);
+                            //print database
+                            System.out.println("Current database:");
+                            System.out.println(db.toString());
+                        } else {
+                            logging.add(inputLine);
+                        }
+                        return;
+                    }
+
+
+
+                    /* 1.2 - if the server is not a backup() primary or active */
+                    parseResult parsed = Protocol.serverUnpack(inputLine);
+                    if (parsed.serverID != serverID) {
+                        System.err.println("The message have been sent to the wrong server!");
+                        System.exit(1);
+                    }
+                    System.out.println("[" + timestamp.toString() + "]" + " Received msg from client " + parsed.clientID + ":" + inputLine);
+                    System.out.println("Unpacked msg: " + parsed.var + "=" + parsed.value + ", id: " + parsed.clientID + ":req" + parsed.reqID);
+                    db.setVariable(parsed.var, parsed.value);
+                    String respond = Protocol.serverPack(db.toString(), parsed.clientID, parsed.serverID, parsed.reqID);
+                    out.println(respond);
+                    //print database
+                    System.out.println("Current database:");
+                    System.out.println(db.toString());
+                } else {
+                    clientSocket.close();
                     return;
                 }
+            } catch (IOException e) {
+                System.err.println("Unable to read line.");
+                return;
+            }
 
         }
     }
@@ -148,7 +151,7 @@ public class Server {
                 }
                 try {
                     Thread.sleep(ckptFreq);
-                    if(forRecovery){
+                    if (forRecovery) {
                         return;
                     }
                 } catch (InterruptedException e) {
@@ -228,7 +231,7 @@ public class Server {
                     isBackup = false;
                 } else if ("backup".equals(args[2]) || "b".equals(args[2])) {
                     isBackup = true;
-                } else if ("recovery".equals(args[2]) || "r".equals(args[2])){
+                } else if ("recovery".equals(args[2]) || "r".equals(args[2])) {
                     isRecovery = true;
                     isPassive = false;
                 } else {
@@ -250,12 +253,12 @@ public class Server {
         }
     }
 
-    private static void startCkptThread(){
+    private static void startCkptThread() {
         if (isPassive && !isBackup) {
             for (int i = 0; i < serverConstant.serverNumber; i++) {
                 if (i != serverID) {
                     // New thread for checkpoint
-                    new CheckpointThread(i, ckptFreq,false).start();
+                    new CheckpointThread(i, ckptFreq, false).start();
                 }
             }
         }
@@ -280,6 +283,7 @@ public class Server {
         /* Launch checkpoint thread for each back up server */
         startCkptThread();
 
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
 
         while (true) {
             try {
@@ -288,7 +292,7 @@ public class Server {
                 System.out.println("Error: " + e);
             }
             // new thread for a client or server (when accepting checkpoint messages)
-            new ServerThread(clientSocket, isBackup).start();
+            executor.execute(new ServerThread(clientSocket, isBackup));
         }
     }
 }

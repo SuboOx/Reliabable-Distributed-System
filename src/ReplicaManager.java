@@ -100,6 +100,7 @@ public class ReplicaManager {
     }
 
     //reqId = -2 when active, -3 when passive
+    //reqId = -4 when switching
     static void sendRecoverMsg(int sendServerID, int receiveServerID, int reqID) {
 
         try (Socket kkSocket = new Socket(serverConstant.serverHostname[sendServerID], serverConstant.portNumber[sendServerID]);

@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 public class GFD {
@@ -146,6 +148,8 @@ public class GFD {
             System.out.println(e.getMessage());
         }
 
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
+
         while (true) {
             try {
                 LFDSocket = GFDSocket.accept();
@@ -153,7 +157,7 @@ public class GFD {
                 System.out.println("Error: " + e);
             }
             // new thread for a LFD
-            new GFDThread(LFDSocket).start();
+            executor.execute(new GFDThread(LFDSocket));
         }
     }
 }
