@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class Server {
+    private static ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
     /*Database and protocol, currently very naive*/
     private static DataBase db = new DataBase();
     private static ArrayList<String> logging = new ArrayList<>();
@@ -258,7 +259,7 @@ public class Server {
             for (int i = 0; i < serverConstant.serverNumber; i++) {
                 if (i != serverID) {
                     // New thread for checkpoint
-                    new CheckpointThread(i, ckptFreq, false).start();
+                    executor.execute(new CheckpointThread(i, ckptFreq, false));
                 }
             }
         }
@@ -282,8 +283,6 @@ public class Server {
 
         /* Launch checkpoint thread for each back up server */
         startCkptThread();
-
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
 
         while (true) {
             try {
