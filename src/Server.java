@@ -54,6 +54,7 @@ public class Server {
                     /* 1 - if this is a recovery replica */
                     if (isRecovery) {
                         Recover.recoverFromLog(inputLine);
+                        isRecovery = false;
                         return;
                     }
                     /* 1 - if it need to send a message to recovery replica */
