@@ -1,7 +1,5 @@
 # A Demo of Reliable Distributed System
 
-[![Build Status](https://travis-ci.org/dwyl/esta.svg?branch=master)]()
-
 ## Protocol
  
  ### Input
